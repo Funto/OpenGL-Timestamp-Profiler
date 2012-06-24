@@ -1,8 +1,8 @@
-// profiler2.cpp
+// profiler.cpp
 
-#include "profiler2.h"
+#include "profiler.h"
 
-#ifdef ENABLE_PROFILER2
+#ifdef ENABLE_PROFILER
 
 #include "hp_timer.h"
 #include "drawer2D.h"
@@ -10,7 +10,7 @@
 #include "limits.h"
 #include <stdio.h>	// BOUM TODO remove
 
-Profiler2 profiler2;
+Profiler profiler;
 
 // Unit: percentage of the screen dimensions
 #define MARGIN_X	0.02f	// left and right margin
@@ -28,7 +28,7 @@ Profiler2 profiler2;
 #define GPU_COUNT	1
 
 //-----------------------------------------------------------------------------
-void Profiler2::init(int win_w, int win_h, int mouse_x, int mouse_y)
+void Profiler::init(int win_w, int win_h, int mouse_x, int mouse_y)
 {
 	m_cur_frame = 0;
 	m_freeze_state = UNFROZEN;
@@ -52,7 +52,7 @@ void Profiler2::init(int win_w, int win_h, int mouse_x, int mouse_y)
 }
 
 //-----------------------------------------------------------------------------
-void Profiler2::shut()
+void Profiler::shut()
 {
 	// TODO: destroy all GPU timer queries
 
@@ -61,7 +61,7 @@ void Profiler2::shut()
 
 //-----------------------------------------------------------------------------
 /// Push a new marker that starts now
-void Profiler2::pushCpuMarker(const char* name, const Color& color)
+void Profiler::pushCpuMarker(const char* name, const Color& color)
 {
 	if(!m_enabled)
 		return;
@@ -94,7 +94,7 @@ extern double wait_updates;
 
 //-----------------------------------------------------------------------------
 /// Stop the last pushed marker
-void Profiler2::popCpuMarker()
+void Profiler::popCpuMarker()
 {
 	if(!m_enabled)
 		return;
@@ -119,7 +119,7 @@ void Profiler2::popCpuMarker()
 	}
 	ti.markers[index].end = getTimeNs();
 	ti.nb_pushed_markers--;
-	
+
 	// BEGIN BOUM
 	if(&ti == &m_cpu_thread_infos[0])
 	{
@@ -130,7 +130,7 @@ void Profiler2::popCpuMarker()
 			full_frame = (double)((ti.markers[index].end - ti.markers[index].start) / (uint64_t)(1000));
 			full_frame /= 1000.0;
 		}
-		
+
 		if(ti.markers[index].color.r == COLOR_YELLOW.r &&
 			ti.markers[index].color.g == COLOR_YELLOW.g &&
 			ti.markers[index].color.b == COLOR_YELLOW.b)
@@ -138,7 +138,7 @@ void Profiler2::popCpuMarker()
 			wait_updates = (double)((ti.markers[index].end - ti.markers[index].start) / (uint64_t)(1000));
 			wait_updates  /= 1000.0;
 		}
-		
+
 		if(ti.markers[index].color.r == COLOR_GREEN.r &&
 			ti.markers[index].color.g == COLOR_GREEN.g &&
 			ti.markers[index].color.b == COLOR_GREEN.b)
@@ -152,7 +152,7 @@ void Profiler2::popCpuMarker()
 
 //-----------------------------------------------------------------------------
 /// Push a new GPU marker that starts when the previously issued commands are processed
-void Profiler2::pushGpuMarker(const char* name, const Color& color)
+void Profiler::pushGpuMarker(const char* name, const Color& color)
 {
 	if(!m_enabled)
 		return;
@@ -181,7 +181,7 @@ void Profiler2::pushGpuMarker(const char* name, const Color& color)
 
 //-----------------------------------------------------------------------------
 /// Stop the last pushed GPU marker when the previously issued commands are processed
-void Profiler2::popGpuMarker()
+void Profiler::popGpuMarker()
 {
 	if(!m_enabled)
 		return;
@@ -203,7 +203,7 @@ void Profiler2::popGpuMarker()
 
 //-----------------------------------------------------------------------------
 /// Swap buffering for the markers
-void Profiler2::synchronizeFrame()
+void Profiler::synchronizeFrame()
 {
 	if(!m_enabled)
 		return;
@@ -253,7 +253,7 @@ void Profiler2::synchronizeFrame()
 
 //-----------------------------------------------------------------------------
 /// Draw the markers
-void Profiler2::draw()
+void Profiler::draw()
 {
 	if(!m_enabled)
 		return;
@@ -465,7 +465,7 @@ void Profiler2::draw()
 
 //-----------------------------------------------------------------------------
 /// Handle freeze/unfreeze
-void Profiler2::onLeftClick()
+void Profiler::onLeftClick()
 {
 	if(!m_enabled)
 		return;
@@ -497,7 +497,7 @@ void Profiler2::onLeftClick()
 
 //-----------------------------------------------------------------------------
 // Get the CpuThreadInfo corresponding to the calling thread
-Profiler2::CpuThreadInfo& Profiler2::getOrAddCpuThreadInfo()
+Profiler::CpuThreadInfo& Profiler::getOrAddCpuThreadInfo()
 {
 	ThreadId	thread_id = threadGetId();
 
@@ -526,7 +526,7 @@ Profiler2::CpuThreadInfo& Profiler2::getOrAddCpuThreadInfo()
 
 //-----------------------------------------------------------------------------
 /// Helper to draw a white background
-void Profiler2::drawBackground()
+void Profiler::drawBackground()
 {
 	Color	back_color = COLOR_WHITE;
 	if(m_freeze_state == FROZEN)
@@ -534,7 +534,7 @@ void Profiler2::drawBackground()
 	drawer2D.drawRect(m_back_rect, back_color);
 }
 
-void Profiler2::updateBackgroundRect()
+void Profiler::updateBackgroundRect()
 {
 	size_t nb_threads = m_cpu_thread_infos.getSize();
 	nb_threads += GPU_COUNT;
@@ -545,4 +545,4 @@ void Profiler2::updateBackgroundRect()
 	m_back_rect.h = ((float)(nb_threads) + 2.0f)*LINE_HEIGHT;
 }
 
-#endif // defined(ENABLE_PROFILER2)
+#endif // defined(ENABLE_PROFILER)

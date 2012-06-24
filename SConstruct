@@ -3,13 +3,12 @@ drawer2D.cpp
 hp_timer.cpp
 main.cpp
 scene.cpp
-profiler.cpp
 thread.cpp
 utils.cpp
 math_utils.cpp
 grid.cpp
 tgaloader.cpp
-profiler2.cpp
+profiler.cpp
 """)
 
 env = Environment()

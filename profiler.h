@@ -1,7 +1,7 @@
-// profiler2.h
+// profiler.h
 
-#ifndef PROFILER2_H
-#define PROFILER2_H
+#ifndef PROFILER_H
+#define PROFILER_H
 
 #include <GL/glew.h>
 #include <string.h>
@@ -14,38 +14,38 @@
 #define INVALID_TIME	((uint64_t)(-1))
 #define INVALID_QUERY	((GLuint)0)
 
-#define ENABLE_PROFILER2	// comment this to remove the profiler
+#define ENABLE_PROFILER	// comment this to remove the profiler
 
-#ifndef ENABLE_PROFILER2
-	#define PROFILER2_PUSH_CPU_MARKER(name, color)
-	#define PROFILER2_POP_CPU_MARKER()
-	#define PROFILER2_PUSH_GPU_MARKER(name, color)
-	#define PROFILER2_POP_GPU_MARKER()
-	#define PROFILER2_SYNC_FRAME()
-	#define PROFILER2_DRAW()
+#ifndef ENABLE_PROFILER
+	#define PROFILER_PUSH_CPU_MARKER(name, color)
+	#define PROFILER_POP_CPU_MARKER()
+	#define PROFILER_PUSH_GPU_MARKER(name, color)
+	#define PROFILER_POP_GPU_MARKER()
+	#define PROFILER_SYNC_FRAME()
+	#define PROFILER_DRAW()
 #else
-	class Profiler2;
-	extern Profiler2 profiler2;
+	class Profiler;
+	extern Profiler profiler;
 
-	#define PROFILER2_PUSH_CPU_MARKER(name, color) \
-		profiler2.pushCpuMarker(name, color)
+	#define PROFILER_PUSH_CPU_MARKER(name, color) \
+		profiler.pushCpuMarker(name, color)
 
-	#define PROFILER2_POP_CPU_MARKER()  \
-		profiler2.popCpuMarker()
+	#define PROFILER_POP_CPU_MARKER()  \
+		profiler.popCpuMarker()
 
-	#define PROFILER2_PUSH_GPU_MARKER(name, color) \
-		profiler2.pushGpuMarker(name, color)
+	#define PROFILER_PUSH_GPU_MARKER(name, color) \
+		profiler.pushGpuMarker(name, color)
 
-	#define PROFILER2_POP_GPU_MARKER()  \
-		profiler2.popGpuMarker()
+	#define PROFILER_POP_GPU_MARKER()  \
+		profiler.popGpuMarker()
 
-	#define PROFILER2_SYNC_FRAME()   \
-		profiler2.synchronizeFrame()
+	#define PROFILER_SYNC_FRAME()   \
+		profiler.synchronizeFrame()
 
-	#define PROFILER2_DRAW() \
-		profiler2.draw()
+	#define PROFILER_DRAW() \
+		profiler.draw()
 
-class Profiler2
+class Profiler
 {
 // BEGIN BOUM
 public:
@@ -155,8 +155,8 @@ public:
 	Rect	m_back_rect;	// Background
 
 public:
-	Profiler2() {}
-	virtual ~Profiler2() {}
+	Profiler() {}
+	virtual ~Profiler() {}
 
 	void	init(int win_w, int win_h, int mouse_x, int mouse_y);
 	void	shut();
@@ -187,6 +187,6 @@ protected:
 	void	updateBackgroundRect();
 };
 
-#endif	// defined(ENABLE_PROFILER2)
+#endif	// defined(ENABLE_PROFILER)
 
-#endif // PROFILER2_H
+#endif // PROFILER_H

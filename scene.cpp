@@ -4,7 +4,7 @@
 #include <GL/glfw.h>	// TODO: remove
 #include <stdio.h>	// TODO: remove
 #include "utils.h"
-#include "profiler2.h"
+#include "profiler.h"
 
 #include "scene.h"
 #include "math_utils.h"
@@ -76,7 +76,7 @@ void Scene::update(double elapsed, double t)
 {
 	if(m_multithread)
 	{
-		PROFILER2_PUSH_CPU_MARKER("Multithread update", COLOR_CYAN);
+		PROFILER_PUSH_CPU_MARKER("Multithread update", COLOR_CYAN);
 
 		DbgPrintf("[main] begin update\n");
 		m_elapsed_time = elapsed;
@@ -87,9 +87,9 @@ void Scene::update(double elapsed, double t)
 			eventTrigger(&m_thread_data[i].update_event);
 		}
 
-		PROFILER2_POP_CPU_MARKER();
+		PROFILER_POP_CPU_MARKER();
 
-		PROFILER2_PUSH_CPU_MARKER("Wait for update", COLOR_YELLOW);
+		PROFILER_PUSH_CPU_MARKER("Wait for update", COLOR_YELLOW);
 		DbgPrintf("[main] wait and reset all main events...\n");
 		for(int i=0 ; i < NB_THREADS ; i++)
 		{
@@ -101,7 +101,7 @@ void Scene::update(double elapsed, double t)
 		}
 
 		DbgPrintf("[main] end update\n");
-		PROFILER2_POP_CPU_MARKER();
+		PROFILER_POP_CPU_MARKER();
 	}
 	else
 	{
@@ -109,9 +109,9 @@ void Scene::update(double elapsed, double t)
 		{
 			char str_marker[32];
 			sprintf(str_marker, "Multithread update %d", i);
-			PROFILER2_PUSH_CPU_MARKER(str_marker, COLORS[i]);
+			PROFILER_PUSH_CPU_MARKER(str_marker, COLORS[i]);
 			m_thread_data[i].grid.update(elapsed, t);
-			PROFILER2_POP_CPU_MARKER();
+			PROFILER_POP_CPU_MARKER();
 		}
 	}
 }
@@ -167,9 +167,9 @@ void Scene::draw()
 
 			Color	color = grid.getColor();
 
-			PROFILER2_PUSH_GPU_MARKER(str_marker, color);
+			PROFILER_PUSH_GPU_MARKER(str_marker, color);
 			grid.draw(mvp_matrix);
-			PROFILER2_POP_GPU_MARKER();
+			PROFILER_POP_GPU_MARKER();
 		}
 
 	}
@@ -188,12 +188,12 @@ void Scene::threadUpdate(ThreadData *data)
 		DbgPrintf("%u reset update event\n", debug_id);
 		eventReset(&data->update_event);
 
-		PROFILER2_PUSH_CPU_MARKER("Thread update", data->grid.getColor());
+		PROFILER_PUSH_CPU_MARKER("Thread update", data->grid.getColor());
 
 		DbgPrintf("%u update", debug_id);
 		data->grid.update(m_elapsed_time, m_update_time);
 
-		PROFILER2_POP_CPU_MARKER();
+		PROFILER_POP_CPU_MARKER();
 
 		DbgPrintf("%u trigger main event", debug_id);
 		eventTrigger(&data->main_event);
