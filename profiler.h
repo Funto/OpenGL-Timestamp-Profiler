@@ -17,33 +17,39 @@
 #define ENABLE_PROFILER	// comment this to remove the profiler
 
 #ifndef ENABLE_PROFILER
+	#define PROFILER_INIT(win_w, win_h, mouse_x, mouse_y)
+	#define PROFILER_SHUT()
+
+	#define PROFILER_ON_MOUSE_POS(mouse_x, mouse_y)
+	#define PROFILER_ON_RESIZE(win_w, win_h)
+	#define PROFILER_ON_LEFT_CLICK()
+
 	#define PROFILER_PUSH_CPU_MARKER(name, color)
 	#define PROFILER_POP_CPU_MARKER()
 	#define PROFILER_PUSH_GPU_MARKER(name, color)
 	#define PROFILER_POP_GPU_MARKER()
-	#define PROFILER_SYNC_FRAME()
+
 	#define PROFILER_DRAW()
+	#define PROFILER_SYNC_FRAME()
+
 #else
 	class Profiler;
 	extern Profiler profiler;
 
-	#define PROFILER_PUSH_CPU_MARKER(name, color) \
-		profiler.pushCpuMarker(name, color)
+	#define PROFILER_INIT(win_w, win_h, mouse_x, mouse_y)	profiler.init(win_w, win_h, mouse_x, mouse_y)
+	#define PROFILER_SHUT()									profiler.shut()
 
-	#define PROFILER_POP_CPU_MARKER()  \
-		profiler.popCpuMarker()
+	#define PROFILER_ON_MOUSE_POS(mouse_x, mouse_y)			profiler.onMousePos(mouse_x, mouse_y)
+	#define PROFILER_ON_RESIZE(win_w, win_h)				profiler.onResize(win_w, win_h)
+	#define PROFILER_ON_LEFT_CLICK()						profiler.onLeftClick()
 
-	#define PROFILER_PUSH_GPU_MARKER(name, color) \
-		profiler.pushGpuMarker(name, color)
+	#define PROFILER_PUSH_CPU_MARKER(name, color)			profiler.pushCpuMarker(name, color)
+	#define PROFILER_POP_CPU_MARKER()						profiler.popCpuMarker()
+	#define PROFILER_PUSH_GPU_MARKER(name, color)			profiler.pushGpuMarker(name, color)
+	#define PROFILER_POP_GPU_MARKER()						profiler.popGpuMarker()
 
-	#define PROFILER_POP_GPU_MARKER()  \
-		profiler.popGpuMarker()
-
-	#define PROFILER_SYNC_FRAME()   \
-		profiler.synchronizeFrame()
-
-	#define PROFILER_DRAW() \
-		profiler.draw()
+	#define PROFILER_DRAW()									profiler.draw()
+	#define PROFILER_SYNC_FRAME()							profiler.synchronizeFrame()
 
 class Profiler
 {

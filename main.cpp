@@ -139,7 +139,7 @@ int main()
 	}
 
 	// Initialize the profiler
-	profiler.init(win_w, win_h, mouse_x, mouse_y);
+	PROFILER_INIT(win_w, win_h, mouse_x, mouse_y);
 
 	// Initialize the example scene
 	if(!scene.init())
@@ -182,11 +182,11 @@ int main()
 		// Detect and notice of changes in the mouse position or the window size
 		if(prev_mouse_x != mouse_x || prev_mouse_y != mouse_y)
 		{
-			profiler.onMousePos(mouse_x, mouse_y);
+			PROFILER_ON_MOUSE_POS(mouse_x, mouse_y);
 		}
 		if(prev_win_w != win_w || prev_win_h != win_h)
 		{
-			profiler.onResize(win_w, win_h);
+			PROFILER_ON_RESIZE(win_w, win_h);
 			drawer2D.onResize(win_w, win_h);
 		}
 
@@ -215,7 +215,7 @@ int main()
 		glDisable(GL_DEPTH_TEST);
 
 		PROFILER_PUSH_GPU_MARKER("Draw profiler", COLOR_DARK_BLUE);
-		profiler.draw();
+		PROFILER_DRAW();
 		PROFILER_POP_GPU_MARKER();
 
 
@@ -262,7 +262,6 @@ int main()
 		sprintf(str, "[%2.1lfms]   Wait for thread updates", wait_updates);
 		drawer2D.drawString(str, 0.01f, 0.15f, COLOR_YELLOW);
 
-		//profiler.m_m
 		/*
 		static double last_time = 0.0f;
 		double now = glfwGetTime();
@@ -310,7 +309,7 @@ int main()
 
 	scene.shut();
 
-	profiler.shut();
+	PROFILER_SHUT();
 
 	drawer2D.shut();
 
@@ -326,7 +325,7 @@ void GLFWCALL onMouseClick(int button, int action)
 {
 	if(button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
 	{
-		profiler.onLeftClick();
+		PROFILER_ON_LEFT_CLICK();
 	}
 }
 

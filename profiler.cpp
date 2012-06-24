@@ -7,7 +7,7 @@
 #include "hp_timer.h"
 #include "drawer2D.h"
 #include "thread.h"
-#include "limits.h"
+#include <limits.h>
 #include <stdio.h>	// BOUM TODO remove
 
 Profiler profiler;

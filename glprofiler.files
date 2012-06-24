@@ -1,5 +1,7 @@
+glprofiler.files
 SConstruct
 Makefile
+
 drawer2D.cpp
 grid.cpp
 hp_timer.cpp
@@ -21,3 +23,4 @@ scene.h
 thread.h
 hole_array.h
 profiler.h
+math_utils.h
