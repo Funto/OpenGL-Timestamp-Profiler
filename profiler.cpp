@@ -87,9 +87,11 @@ void Profiler::pushCpuMarker(const char* name, const Color& color)
 }
 
 // BEGIN BOUM
+#ifdef PROFILER_CHEATING
 extern double full_frame;
 extern double update;
 extern double wait_updates;
+#endif
 // END BOUM
 
 //-----------------------------------------------------------------------------
@@ -120,7 +122,7 @@ void Profiler::popCpuMarker()
 	ti.markers[index].end = getTimeNs();
 	ti.nb_pushed_markers--;
 
-	// BEGIN BOUM
+#ifdef PROFILER_CHEATING
 	if(&ti == &m_cpu_thread_infos[0])
 	{
 		if(ti.markers[index].color.r == COLOR_GRAY.r &&
@@ -147,7 +149,7 @@ void Profiler::popCpuMarker()
 			update  /= 1000.0;
 		}
 	}
-	// END BOUM
+#endif
 }
 
 //-----------------------------------------------------------------------------

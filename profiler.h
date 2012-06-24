@@ -16,6 +16,8 @@
 
 #define ENABLE_PROFILER	// comment this to remove the profiler
 
+//#define PROFILER_CHEATING	// TODO: temporary!!
+
 #ifndef ENABLE_PROFILER
 	#define PROFILER_INIT(win_w, win_h, mouse_x, mouse_y)
 	#define PROFILER_SHUT()

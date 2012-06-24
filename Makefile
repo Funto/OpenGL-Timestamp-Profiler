@@ -21,12 +21,12 @@ clean:
 
 # --- includes ---
 camera.h: math_utils.h
-drawer2D.o: utils.h tgaloader.h
+drawer2D.o: drawer2D.h utils.h tgaloader.h
 drawer2D.h: utils.h
-grid.o: utils.h
+grid.o: grid.h utils.h
 grid.h: camera.h utils.h
-main.cpp: scene.h hp_timer.h profiler.h drawer2D.h thread.h math_utils.h
-profiler.o: hp_timer.h drawer2D.h thread.h
+main.o: scene.h hp_timer.h profiler.h drawer2D.h thread.h math_utils.h
+profiler.o: profiler.h hp_timer.h drawer2D.h thread.h
 profiler.h: hole_array.h thread.h utils.h
-scene.o: utils.h profiler.h math_utils.h
+scene.o: scene.h utils.h profiler.h math_utils.h
 scene.h: camera.h grid.h thread.h utils.h

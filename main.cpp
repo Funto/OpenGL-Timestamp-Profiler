@@ -22,8 +22,13 @@
 #include "thread.h"
 #include "math_utils.h"
 
+#ifdef PROFILER_CHEATING
+double full_frame = 0.0;
+double update = 0.0;
+double wait_updates = 0.0;
+#endif
+
 static volatile bool	done = false;
-static volatile int		frame_count = 0;
 Scene					scene;
 
 void GLFWCALL onMouseClick(int x, int y);
@@ -35,34 +40,6 @@ void DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 	// TODO
 	printf("*** DebugCallback\n");
 }
-
-/*
-void*	threadProc(void* data)
-{
-	while(!done)
-	{
-		int i = frame_count % 3;
-		const Color* p_color = &COLOR_RED;
-		if(i == 1)
-			p_color = &COLOR_GREEN;
-		else if(i == 2)
-			p_color = &COLOR_BLUE;
-
-		profiler_PUSH_CPU_MARKER("threadProc", *p_color);
-		msleep(10);
-		profiler_POP_CPU_MARKER();
-		//usleep(100);
-		msleep(3);
-	}
-	return NULL;
-}
-*/
-
-// BEGIN BOUM
-double full_frame = 0.0;
-double update = 0.0;
-double wait_updates = 0.0;
-// END BOUM
 
 int main()
 {
@@ -156,9 +133,6 @@ int main()
 	glGetIntegerv(GL_MINOR_VERSION, &minor);
 	printf("OpenGL version: %d.%d\n", major, minor);
 
-	// Create a thread
-//	ThreadId	thread_id = threadCreate(&threadProc, NULL);
-
 	// Main loop
 	double elapsed = 0.0;
 	double last_t = glfwGetTime();
@@ -198,12 +172,6 @@ int main()
 
 		glEnable(GL_DEPTH_TEST);
 
-//		PROFILER_PUSH_CPU_MARKER("Setup matrices", COLOR_LIGHT_GREEN);
-
-		//msleep(20);	// TODO: DEBUG
-
-//		PROFILER_POP_CPU_MARKER();
-
 		PROFILER_PUSH_CPU_MARKER("Update scene", COLOR_GREEN);
 		scene.update(elapsed, t);
 		PROFILER_POP_CPU_MARKER();
@@ -218,40 +186,7 @@ int main()
 		PROFILER_DRAW();
 		PROFILER_POP_GPU_MARKER();
 
-
-		// BEGIN BOUM
-		/*
-		double full_frame = 0.0;
-		double update = 0.0;
-		double wait_updates = 0.0;
-		Profiler::CpuThreadInfo& info = profiler.m_cpu_thread_infos.get(0);
-		for(int i=0 ; i < info.nb_pushed_markers ; i++)
-		{
-			if(info.markers[i].color.r == COLOR_GRAY.r &&
-				info.markers[i].color.g == COLOR_GRAY.g &&
-				info.markers[i].color.b == COLOR_GRAY.b)
-			{
-				full_frame = (double)((info.markers[i].end - info.markers[i].start) / (uint64_t)(1000));
-				full_frame /= 1000.0;
-			}
-
-			if(info.markers[i].color.r == COLOR_GREEN.r &&
-				info.markers[i].color.g == COLOR_GREEN.g &&
-				info.markers[i].color.b == COLOR_GREEN.b)
-			{
-				update = (double)((info.markers[i].end - info.markers[i].start) / (uint64_t)(1000));
-				update /= 1000.0;
-			}
-
-			if(info.markers[i].color.r == COLOR_YELLOW.r &&
-				info.markers[i].color.g == COLOR_YELLOW.g &&
-				info.markers[i].color.b == COLOR_YELLOW.b)
-			{
-				wait_updates = (double)((info.markers[i].end - info.markers[i].start) / (uint64_t)(1000));
-				wait_updates /= 1000.0;
-			}
-		}
-		*/
+#ifdef PROFILER_CHEATING
 		char str[256];
 		sprintf(str, "[%2.1lfms] Full frame", full_frame);
 		drawer2D.drawString(str, 0.01f, 0.25f, COLOR_GRAY);
@@ -261,38 +196,9 @@ int main()
 
 		sprintf(str, "[%2.1lfms]   Wait for thread updates", wait_updates);
 		drawer2D.drawString(str, 0.01f, 0.15f, COLOR_YELLOW);
-
-		/*
-		static double last_time = 0.0f;
-		double now = glfwGetTime();
-		double delta = (now-last_time) * 1000.0;
-		last_time = now;
-		char str[256];
-
-		static double last_delta = 0.0f;
-		sprintf(str, "[%2.1lfms] Full frame", last_delta);
-		drawer2D.drawString(str, 0.01f, 0.25f, COLOR_GRAY);
-
-		sprintf(str, "[%2.1lfms]  Update scene", last_delta * 0.65);
-		drawer2D.drawString(str, 0.01f, 0.2f, COLOR_GREEN);
-
-		sprintf(str, "[%2.1lfms]   Wait for thread updates", last_delta * 0.65);
-		drawer2D.drawString(str, 0.01f, 0.15f, COLOR_YELLOW);
-
-		last_delta = delta;
-		*/
-
-		// END BOUM
-		//drawer2D.drawString("Hello World!", 0.05f, 1.0f-0.05f, COLOR_LIGHT_BLUE);	// TODO: DEBUG
-		//drawer2D.drawString("Hello World!", 0.01f, 0.12f, COLOR_LIGHT_BLUE);	// TODO: ASOBO BUG!!
-
-		//drawer2D.drawString("[52.3ms] Full frame", 0.01f, 0.25f, COLOR_GRAY);
-		//drawer2D.drawString("[52.3ms]  Update scene", 0.01f, 0.2f, COLOR_GREEN);
-		//drawer2D.drawString("[52.3ms]   Wait for thread updates", 0.01f, 0.15f, COLOR_YELLOW);
+#endif
 
 		checkGLError();
-
-		frame_count++;
 
 		// Swap buffers
 		glfwSwapBuffers();
@@ -300,12 +206,9 @@ int main()
 		PROFILER_POP_CPU_MARKER();
 
 	} // Check if the ESC key was pressed or the window was closed
-	while( glfwGetKey( GLFW_KEY_ESC ) != GLFW_PRESS &&
-		   glfwGetWindowParam( GLFW_OPENED ) );
+	while( glfwGetKey( GLFW_KEY_ESC ) != GLFW_PRESS && glfwGetWindowParam( GLFW_OPENED ) );
 
 	done = true;
-
-//	threadJoin(thread_id);
 
 	scene.shut();
 
