@@ -6,7 +6,6 @@ hp_timer.cpp
 main.cpp
 math_utils.cpp
 profiler.cpp
-profiler2.cpp
 scene.cpp
 tgaloader.cpp
 thread.cpp
@@ -20,6 +19,5 @@ camera.h
 hp_timer.h
 scene.h
 thread.h
-profiler2.h
 hole_array.h
 profiler.h
