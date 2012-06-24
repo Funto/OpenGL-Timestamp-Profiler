@@ -29,14 +29,12 @@ Scene					scene;
 void GLFWCALL onMouseClick(int x, int y);
 void GLFWCALL onKey(int key, int action);
 
-/*
 void DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 				   GLsizei length, const GLchar* message, GLvoid* userParam)
 {
 	// TODO
 	printf("*** DebugCallback\n");
 }
-*/
 
 /*
 void*	threadProc(void* data)
@@ -104,8 +102,8 @@ int main()
 
 	glfwSetWindowTitle( "Profiler - OpenGL Insights" );
 
-//	if(GLEW_ARB_debug_output)
-//		glDebugMessageCallbackARB(&DebugCallback, NULL);
+	if(GLEW_ARB_debug_output)
+		glDebugMessageCallbackARB((GLDEBUGPROCARB)&DebugCallback, NULL);
 
 	// Load the OpenGL implementation + available extensions
 	GLenum error = glewInit();
