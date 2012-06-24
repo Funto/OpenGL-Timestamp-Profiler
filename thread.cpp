@@ -32,36 +32,51 @@ void mutexDestroy(Mutex* mutex)
 	DeleteCriticalSection((LPCRITICAL_SECTION)mutex);
 }
 
-void mutexLock(const Mutex* mutex)
+void mutexLock(Mutex* mutex)
 {
 	EnterCriticalSection((LPCRITICAL_SECTION)mutex);
 }
 
-void mutexUnlock(const Mutex* mutex)
+void mutexUnlock(Mutex* mutex)
 {
 	LeaveCriticalSection((LPCRITICAL_SECTION)mutex);
 }
 
 void eventCreate(Event* event)
 {
-	// TODO!
-}
-
-void eventSignal(Event* event)
-{
-	// TODO!
-}
-
-void eventWait(Event* event)
-{
-	// TODO!
+//	pthread_mutex_init(&event->mutex, NULL);
+//	pthread_cond_init(&event->cond, NULL);
+//	event->triggered = false;
 }
 
 void eventDestroy(Event* event)
 {
-	// TODO!
+//	pthread_cond_destroy(&event->cond);
+//	pthread_mutex_destroy(&event->mutex);
 }
 
+void eventTrigger(Event* event)
+{
+//	pthread_mutex_lock(&event->mutex);
+//	event->triggered = true;
+//	pthread_cond_signal(&event->cond);
+//	pthread_mutex_unlock(&event->mutex);
+}
+
+void eventReset(Event *event)
+{
+//	pthread_mutex_lock(&event->mutex);
+//	event->triggered = false;
+//	pthread_mutex_unlock(&event->mutex);
+}
+
+void eventWait(Event* event)
+{
+//	pthread_mutex_lock(&event->mutex);
+//	while (!event->triggered)
+//		pthread_cond_wait(&event->cond, &event->mutex);
+//	pthread_mutex_unlock(&event->mutex);
+}
 // ---------------- pthread implementation: MacOS X, Linux, BSD... --------
 #else
 

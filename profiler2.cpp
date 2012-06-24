@@ -86,6 +86,12 @@ void Profiler2::pushCpuMarker(const char* name, const Color& color)
 	ti.nb_pushed_markers++;
 }
 
+// BEGIN BOUM
+extern double full_frame;
+extern double update;
+extern double wait_updates;
+// END BOUM
+
 //-----------------------------------------------------------------------------
 /// Stop the last pushed marker
 void Profiler2::popCpuMarker()
@@ -113,6 +119,35 @@ void Profiler2::popCpuMarker()
 	}
 	ti.markers[index].end = getTimeNs();
 	ti.nb_pushed_markers--;
+	
+	// BEGIN BOUM
+	if(&ti == &m_cpu_thread_infos[0])
+	{
+		if(ti.markers[index].color.r == COLOR_GRAY.r &&
+			ti.markers[index].color.g == COLOR_GRAY.g &&
+			ti.markers[index].color.b == COLOR_GRAY.b)
+		{
+			full_frame = (double)((ti.markers[index].end - ti.markers[index].start) / (uint64_t)(1000));
+			full_frame /= 1000.0;
+		}
+		
+		if(ti.markers[index].color.r == COLOR_YELLOW.r &&
+			ti.markers[index].color.g == COLOR_YELLOW.g &&
+			ti.markers[index].color.b == COLOR_YELLOW.b)
+		{
+			wait_updates = (double)((ti.markers[index].end - ti.markers[index].start) / (uint64_t)(1000));
+			wait_updates  /= 1000.0;
+		}
+		
+		if(ti.markers[index].color.r == COLOR_GREEN.r &&
+			ti.markers[index].color.g == COLOR_GREEN.g &&
+			ti.markers[index].color.b == COLOR_GREEN.b)
+		{
+			update= (double)((ti.markers[index].end - ti.markers[index].start) / (uint64_t)(1000));
+			update  /= 1000.0;
+		}
+	}
+	// END BOUM
 }
 
 //-----------------------------------------------------------------------------
