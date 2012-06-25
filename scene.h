@@ -40,7 +40,7 @@ public:
 	bool	init();
 	void	shut();
 	void	update(double elapsed, double t);
-	void	draw();
+	void	draw(int win_w, int win_h);
 
 	void	setMultithreaded(bool multithread) {m_multithread = multithread;}
 	bool	isMultithreaded() const	{return m_multithread;}

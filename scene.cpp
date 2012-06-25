@@ -1,7 +1,5 @@
 // scene.cpp
 
-#include <GL/glew.h>	// TODO: remove
-#include <GL/glfw.h>	// TODO: remove
 #include <stdio.h>	// TODO: remove
 #include "utils.h"
 #include "profiler.h"
@@ -116,12 +114,8 @@ void Scene::update(double elapsed, double t)
 	}
 }
 
-void Scene::draw()
+void Scene::draw(int win_w, int win_h)
 {
-	int win_w, win_h;
-	glfwGetWindowSize(&win_w, &win_h);
-	win_h = win_h > 0 ? win_h : 1;	// TODO: remove
-
 	// Select and setup the projection matrix
 	m_camera.setPerspective(65.0f, (float)win_w/(float)win_h, 1.0f, 100.0f);
 

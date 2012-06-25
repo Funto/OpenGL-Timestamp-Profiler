@@ -14,7 +14,7 @@
 #define INVALID_TIME	((uint64_t)(-1))
 #define INVALID_QUERY	((GLuint)0)
 
-#define ENABLE_PROFILER	// comment this to remove the profiler
+//#define ENABLE_PROFILER	// comment this to remove the profiler
 
 //#define PROFILER_CHEATING	// TODO: temporary!!
 
@@ -55,10 +55,7 @@
 
 class Profiler
 {
-// BEGIN BOUM
-public:
-//private:
-// END BOUM
+private:
 	static const size_t	NB_RECORDED_FRAMES = 3;
 
 	static const size_t	NB_MAX_CPU_MARKERS_PER_FRAME = 100;

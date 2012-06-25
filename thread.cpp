@@ -1,11 +1,12 @@
 // thread.cpp
 
 #include "thread.h"
+#include <assert.h>
 
-// ------------------------- Windows implementation-----------------------
+// ------------------------- Windows API implementation-----------------------
+// http://www.flipcode.com/archives/Simple_Win32_Thread_Class.shtml
 #ifdef WIN32
 
-// http://www.flipcode.com/archives/Simple_Win32_Thread_Class.shtml
 ThreadId threadCreate(ThreadProc proc, void* arg)
 {
 	return CreateThread(0, 0, (LPTHREAD_START_ROUTINE)proc, arg, 0, 0);
@@ -18,8 +19,8 @@ ThreadId threadGetId()
 
 void threadJoin(ThreadId id)
 {
-	// TODO: check if the thread has terminated or not
-	WaitForSingleObject(id, INFINITE);
+	DWORD	dwWaitResult = WaitForSingleObject(id, INFINITE);
+	assert(dwWaitResult == WAIT_OBJECT_0);
 }
 
 void mutexCreate(Mutex* mutex)
@@ -44,38 +45,32 @@ void mutexUnlock(Mutex* mutex)
 
 void eventCreate(Event* event)
 {
-//	pthread_mutex_init(&event->mutex, NULL);
-//	pthread_cond_init(&event->cond, NULL);
-//	event->triggered = false;
+	*event = CreateEvent(
+			NULL,	// security attributes
+			TRUE,	// manual reset event
+			FALSE,	// initial state is non-signaled
+			NULL);	// no name
 }
 
 void eventDestroy(Event* event)
 {
-//	pthread_cond_destroy(&event->cond);
-//	pthread_mutex_destroy(&event->mutex);
+	CloseHandle(*event);
 }
 
 void eventTrigger(Event* event)
 {
-//	pthread_mutex_lock(&event->mutex);
-//	event->triggered = true;
-//	pthread_cond_signal(&event->cond);
-//	pthread_mutex_unlock(&event->mutex);
+	SetEvent(*event);
 }
 
 void eventReset(Event *event)
 {
-//	pthread_mutex_lock(&event->mutex);
-//	event->triggered = false;
-//	pthread_mutex_unlock(&event->mutex);
+	ResetEvent(*event);
 }
 
 void eventWait(Event* event)
 {
-//	pthread_mutex_lock(&event->mutex);
-//	while (!event->triggered)
-//		pthread_cond_wait(&event->cond, &event->mutex);
-//	pthread_mutex_unlock(&event->mutex);
+	DWORD	dwWaitResult = WaitForSingleObject(*event, INFINITE);
+	assert(dwWaitResult == WAIT_OBJECT_0);
 }
 // ---------------- pthread implementation: MacOS X, Linux, BSD... --------
 #else

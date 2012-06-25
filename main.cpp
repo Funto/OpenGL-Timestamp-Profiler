@@ -22,6 +22,8 @@
 #include "thread.h"
 #include "math_utils.h"
 
+#define BASE_TITLE	"Profiler - OpenGL Insights"
+
 #ifdef PROFILER_CHEATING
 double full_frame = 0.0;
 double update = 0.0;
@@ -39,6 +41,33 @@ void DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 {
 	// TODO
 	printf("*** DebugCallback\n");
+}
+
+void fpsCount(const char* base_title)
+{
+	static bool first_time = false;
+	static double t, t0;
+	static int fps = 0, frames = 0;	// Nombre de FPS et compteur de frames
+
+	if(first_time)
+	{
+		t0 = glfwGetTime();
+		first_time = true;
+	}
+
+	// Calcul des FPS
+	t = glfwGetTime();
+
+	if( (t-t0) > 1.0)
+	{
+		fps = (int)((double)frames / (double)(t-t0));
+		char buffer[256] = "";
+		sprintf(buffer, "%s - FPS : %d", base_title, fps);
+		glfwSetWindowTitle(buffer);
+		t0 = t;
+		frames = 0;
+	}
+	frames++;
 }
 
 int main()
@@ -77,7 +106,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	glfwSetWindowTitle( "Profiler - OpenGL Insights" );
+	glfwSetWindowTitle( BASE_TITLE );
 
 	if(GLEW_ARB_debug_output)
 		glDebugMessageCallbackARB((GLDEBUGPROCARB)&DebugCallback, NULL);
@@ -124,6 +153,7 @@ int main()
 		fprintf(stderr, "*** FAILED initializing the scene\n");
 		return EXIT_FAILURE;
 	}
+	printf("Multithreaded update: %s\n", scene.isMultithreaded() ? "yes" : "no");
 
 	// Enable vertical sync (on cards that support it)
 	glfwSwapInterval( 1 );
@@ -138,6 +168,7 @@ int main()
 	double last_t = glfwGetTime();
 	do
 	{
+		last_t = t;
 		t = glfwGetTime();
 		elapsed = t - last_t;
 
@@ -153,7 +184,7 @@ int main()
 
 		glfwGetWindowSize(&win_w, &win_h);
 
-		// Detect and notice of changes in the mouse position or the window size
+		// Detect and notify changes in the mouse position or the window size
 		if(prev_mouse_x != mouse_x || prev_mouse_y != mouse_y)
 		{
 			PROFILER_ON_MOUSE_POS(mouse_x, mouse_y);
@@ -177,7 +208,7 @@ int main()
 		PROFILER_POP_CPU_MARKER();
 
 		PROFILER_PUSH_CPU_MARKER("Draw scene", COLOR_RED);
-		scene.draw();
+		scene.draw(win_w, win_h);
 		PROFILER_POP_CPU_MARKER();
 
 		glDisable(GL_DEPTH_TEST);
@@ -199,6 +230,8 @@ int main()
 #endif
 
 		checkGLError();
+
+		fpsCount(BASE_TITLE);
 
 		// Swap buffers
 		glfwSwapBuffers();
@@ -236,15 +269,7 @@ void GLFWCALL onKey(int key, int action)
 {
 	if(action == GLFW_RELEASE && key == 'M')
 	{
-		if(scene.isMultithreaded())
-		{
-			printf("Activate multithread\n");
-			scene.setMultithreaded(false);
-		}
-		else
-		{
-			printf("Deactivate multithread\n");
-			scene.setMultithreaded(true);
-		}
+		scene.setMultithreaded(!scene.isMultithreaded());
+		printf("Multithreaded update: %s\n", scene.isMultithreaded() ? "yes" : "no");
 	}
 }
