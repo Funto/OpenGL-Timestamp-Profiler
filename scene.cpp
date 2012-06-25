@@ -24,7 +24,7 @@ const Color	Scene::COLORS[NB_THREADS] = {
 
 bool Scene::init()
 {
-	m_multithread = true;
+	m_multithread = false;
 	m_shut = false;
 	m_elapsed_time = 0.0f;
 	m_update_time = 0.0f;

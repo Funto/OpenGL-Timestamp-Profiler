@@ -4,13 +4,13 @@
 #include <stdio.h>
 
 #ifdef _WIN32
-	double __freq;
+	uint64_t __freq;
 
 	void initTimer()
 	{
 		LARGE_INTEGER freq;
 		QueryPerformanceFrequency(&freq);
-		__freq = double(freq.QuadPart) / 1000.0;
+		__freq = freq.QuadPart;
 	}
 
 #elif defined(__MACH__)
@@ -35,7 +35,7 @@
 		mach_port_deallocate(mach_task_self(), __clock_rt);
 	}
 
-#elif defined(__linux__)
+#else
 	time_t	__tv_sec_at_init = 0;
 
 	void initTimer()

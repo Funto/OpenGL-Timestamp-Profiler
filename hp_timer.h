@@ -8,23 +8,16 @@
 #ifdef _WIN32	// Windows 32 bits and 64 bits: use QueryPerformanceCounter()
 	#include <windows.h>
 
-	extern double __freq;
+	extern uint64_t __freq;
 	void initTimer();
 	inline void shutTimer() {}
-
-	inline double getTimeMs()
-	{
-		LARGE_INTEGER now;
-		QueryPerformanceCounter(&now);
-		return (double)(now.QuadPart) / __freq;
-	}
 
 	// TODO
 	inline uint64_t	getTimeNs()
 	{
 		LARGE_INTEGER now;
 		QueryPerformanceCounter(&now);
-		return (uint64_t)(now.QuadPart) / __freq;
+		return (uint64_t)(now.QuadPart / __freq);
 	}
 
 
@@ -38,8 +31,7 @@
 
 	extern clock_serv_t __clock_rt;
 
-	#include <stdio.h>	// DEBUG
-
+	// TODO: change to getTimeNs()
 	inline double getTimeMs()
 	{
 		// http://pastebin.com/89qJQsCw
@@ -49,7 +41,6 @@
 		mach_timespec_t mts;
 		clock_get_time(__clock_rt, &mts);
 
-		//printf("mts.tv_sec == %u, mts.tv_nsec == %u\n", mts.tv_sec, mts.tv_nsec);
 		return (double)(mts.tv_sec) * 1000.0 + (double)(mts.tv_nsec) / 1000000.0;
 	}
 
@@ -61,12 +52,6 @@
 
 	void initTimer();
 	inline void shutTimer() {}
-	inline double getTimeMs()
-	{
-		struct timespec ts;
-		clock_gettime(CLOCK_REALTIME, &ts);
-		return (double)(ts.tv_sec) * 1000.0 + (double)(ts.tv_nsec) / 1000000.0;
-	}
 
 	inline uint64_t getTimeNs()
 	{
@@ -80,12 +65,16 @@
 
 #else	// Fallback for other UN*X systems: use gettimeofday()
 	// http://stackoverflow.com/questions/275004/c-timer-function-to-provide-time-in-nano-seconds
+
 	#include <sys/time.h>
-	inline double getTimeMs()
+	inline uint64_t getTimeNs()
 	{
 		struct timeval tv;
 		gettimeofday(&tv, NULL);
-		return double(tv.tv_sec * 1000) + (double(tv.tv_usec) / 1000.0);
+		uint64_t	time_sec = (uint64_t)(ts.tv_sec - __tv_sec_at_init);
+		uint64_t	time_ns = time_sec * (uint64_t)(1000000000);
+		time_ns += (uint64_t)(ts.tv_nsec);
+		return time_ns;
 	}
 #endif
 

@@ -4,11 +4,16 @@
 
 #ifdef ENABLE_PROFILER
 
+#ifdef PROFILER_CHEATING
+extern double full_frame;
+extern double update;
+extern double wait_updates;
+#endif
+
 #include "hp_timer.h"
 #include "drawer2D.h"
 #include "thread.h"
 #include <limits.h>
-#include <stdio.h>	// BOUM TODO remove
 
 Profiler profiler;
 
@@ -85,14 +90,6 @@ void Profiler::pushCpuMarker(const char* name, const Color& color)
 	incrementCycle(&ti.cur_write_id, NB_MARKERS_PER_CPU_THREAD);
 	ti.nb_pushed_markers++;
 }
-
-// BEGIN BOUM
-#ifdef PROFILER_CHEATING
-extern double full_frame;
-extern double update;
-extern double wait_updates;
-#endif
-// END BOUM
 
 //-----------------------------------------------------------------------------
 /// Stop the last pushed marker

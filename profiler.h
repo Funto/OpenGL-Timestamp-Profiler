@@ -14,7 +14,7 @@
 #define INVALID_TIME	((uint64_t)(-1))
 #define INVALID_QUERY	((GLuint)0)
 
-//#define ENABLE_PROFILER	// comment this to remove the profiler
+#define ENABLE_PROFILER	// comment this to remove the profiler
 
 //#define PROFILER_CHEATING	// TODO: temporary!!
 

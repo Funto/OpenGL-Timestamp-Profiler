@@ -11,12 +11,8 @@
 class Grid
 {
 private:
-	// BEGIN TEMP
-	//static const int	GRID_WIDTH = 300;
-	//static const int	GRID_HEIGHT = 300;
-	static const int	GRID_WIDTH = 150;
-	static const int	GRID_HEIGHT = 150;
-	// END TEMP
+	static const int	GRID_WIDTH = 300;
+	static const int	GRID_HEIGHT = 300;
 
 	static const int	GRID_NB_INDICES = 6 * (GRID_WIDTH-1) * (GRID_HEIGHT-1);
 
