@@ -74,6 +74,7 @@ void Scene::update(double elapsed, double t)
 {
 	if(m_multithread)
 	{
+		// Trigger update on multiple threads and wait for completion
 		PROFILER_PUSH_CPU_MARKER("Multithread update", COLOR_CYAN);
 
 		DbgPrintf("[main] begin update\n");
@@ -103,6 +104,7 @@ void Scene::update(double elapsed, double t)
 	}
 	else
 	{
+		// Sequential update
 		for(int i=0 ; i < NB_THREADS ; i++)
 		{
 			char str_marker[32];

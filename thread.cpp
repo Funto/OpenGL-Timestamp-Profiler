@@ -7,6 +7,7 @@
 // http://www.flipcode.com/archives/Simple_Win32_Thread_Class.shtml
 #ifdef WIN32
 
+// --- Thread ---
 ThreadId threadCreate(ThreadProc proc, void* arg)
 {
 	return CreateThread(0, 0, (LPTHREAD_START_ROUTINE)proc, arg, 0, 0);
@@ -23,6 +24,7 @@ void threadJoin(ThreadId id)
 	assert(dwWaitResult == WAIT_OBJECT_0);
 }
 
+// --- Mutex ---
 void mutexCreate(Mutex* mutex)
 {
 	InitializeCriticalSection((LPCRITICAL_SECTION)mutex);
@@ -43,6 +45,7 @@ void mutexUnlock(Mutex* mutex)
 	LeaveCriticalSection((LPCRITICAL_SECTION)mutex);
 }
 
+// --- Event ---
 void eventCreate(Event* event)
 {
 	*event = CreateEvent(
@@ -114,8 +117,7 @@ void mutexUnlock(Mutex* mutex)
 	pthread_mutex_unlock((pthread_mutex_t*)mutex);
 }
 
-// --- Events ---
-
+// --- Event ---
 void eventCreate(Event* event)
 {
 	pthread_mutex_init(&event->mutex, NULL);

@@ -23,6 +23,8 @@
 #include "math_utils.h"
 
 #define BASE_TITLE	"Profiler - OpenGL Insights"
+#define WIN_WIDTH	640
+#define WIN_HEIGHT	480
 
 #ifdef PROFILER_CHEATING
 double full_frame = 0.0;
@@ -76,7 +78,6 @@ int main()
 	int prev_win_w, prev_win_h;
 	int mouse_x, mouse_y;
 	int prev_mouse_x, prev_mouse_y;
-	double t;
 
 	initTimer();
 
@@ -98,7 +99,7 @@ int main()
 
 //	glfwOpenWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
 
-	if( !glfwOpenWindow( 640, 480, 0,0,0,0, 0,0, GLFW_WINDOW ) )
+	if( !glfwOpenWindow( WIN_WIDTH, WIN_HEIGHT, 0,0,0,0, 0,0, GLFW_WINDOW ) )
 	{
 		fprintf(stderr, "Failed to open GLFW window\n");
 
@@ -155,7 +156,7 @@ int main()
 	}
 	printf("Multithreaded update: %s\n", scene.isMultithreaded() ? "yes" : "no");
 
-	// Enable vertical sync (on cards that support it)
+	// Enable vertical sync
 	glfwSwapInterval( 1 );
 
 	GLint major, minor;
@@ -165,7 +166,8 @@ int main()
 
 	// Main loop
 	double elapsed = 0.0;
-	double last_t = glfwGetTime();
+	double t = glfwGetTime();
+	double last_t = t;
 	do
 	{
 		last_t = t;

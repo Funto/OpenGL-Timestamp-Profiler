@@ -3,8 +3,6 @@
 #ifndef SCENE_H
 #define SCENE_H
 
-#include <GL/glew.h>
-
 #include "camera.h"
 #include "grid.h"
 #include "thread.h"
