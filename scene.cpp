@@ -1,6 +1,6 @@
 // scene.cpp
 
-#include <stdio.h>	// TODO: remove
+#include <stdio.h>
 #include "utils.h"
 #include "profiler.h"
 
@@ -41,6 +41,7 @@ bool Scene::init()
 
 		eventCreate(&m_thread_data[i].update_event);
 		eventCreate(&m_thread_data[i].main_event);
+		m_thread_data[i].index = i;
 		m_thread_data[i].thread_id = threadCreate(&threadUpdateWrapper, &m_thread_data[i]);
 	}
 
@@ -77,12 +78,12 @@ void Scene::update(double elapsed, double t)
 		// Trigger update on multiple threads and wait for completion
 		PROFILER_PUSH_CPU_MARKER("Multithread update", COLOR_CYAN);
 
-		DbgPrintf("[main] begin update\n");
+		DbgPrintf("--- [main] begin update ---\n");
 		m_elapsed_time = elapsed;
 		m_update_time = t;
 		for(int i=0 ; i < NB_THREADS ; i++)
 		{
-			DbgPrintf("[main] trigger update event\n");
+			DbgPrintf("[main] trigger update event %d\n", i);
 			eventTrigger(&m_thread_data[i].update_event);
 		}
 
@@ -99,7 +100,7 @@ void Scene::update(double elapsed, double t)
 			eventReset(&m_thread_data[i].main_event);
 		}
 
-		DbgPrintf("[main] end update\n");
+		DbgPrintf("--- [main] end update ---\n");
 		PROFILER_POP_CPU_MARKER();
 	}
 	else
@@ -173,28 +174,25 @@ void Scene::draw(int win_w, int win_h)
 
 void Scene::threadUpdate(ThreadData *data)
 {
-#ifdef _DEBUG_PRINTF
-	unsigned int debug_id = ((unsigned int)(data->thread_id)) & 0xF;
-#endif
 	while(!m_shut)
 	{
-		DbgPrintf("%u wait update event\n", debug_id);
+		DbgPrintf("(%d) wait update event %d\n", data->index, data->index);
 		eventWait(&data->update_event);
 
-		DbgPrintf("%u reset update event\n", debug_id);
+		DbgPrintf("(%d) reset update event %d\n", data->index, data->index);
 		eventReset(&data->update_event);
 
 		PROFILER_PUSH_CPU_MARKER("Thread update", data->grid.getColor());
 
-		DbgPrintf("%u update", debug_id);
+		DbgPrintf("(%d) update\n", data->index);
 		data->grid.update(m_elapsed_time, m_update_time);
 
 		PROFILER_POP_CPU_MARKER();
 
-		DbgPrintf("%u trigger main event", debug_id);
+		DbgPrintf("(%d) trigger main event %d\n", data->index, data->index);
 		eventTrigger(&data->main_event);
 	}
-	DbgPrintf("%u: done\n", debug_id);
+	DbgPrintf("(%d): done\n", data->index);
 }
 
 void* Scene::threadUpdateWrapper(void* user_data)

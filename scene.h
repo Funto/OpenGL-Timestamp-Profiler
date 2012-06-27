@@ -26,6 +26,7 @@ private:
 		ThreadId		thread_id;
 		Event			update_event;
 		Event			main_event;
+		int				index;
 	};
 
 	bool			m_multithread;
