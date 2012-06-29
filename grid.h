@@ -11,15 +11,15 @@
 class Grid
 {
 private:
-	static const int	GRID_WIDTH = 300;
-	static const int	GRID_HEIGHT = 300;
+	static const int	GRID_WIDTH;
+	static const int	GRID_HEIGHT;
 
-	static const int	GRID_NB_INDICES = 6 * (GRID_WIDTH-1) * (GRID_HEIGHT-1);
+	static const int	GRID_NB_INDICES;
 
-	static const float	GRID_WORLD_SIZE = 10.0f;
+	static const float	GRID_WORLD_SIZE;
 
-	static const float	GRID_Y_FLOOR = -3.0f;
-	static const float	GRID_Y_DISTO = 0.5f;
+	static const float	GRID_Y_FLOOR;
+	static const float	GRID_Y_DISTO;
 
 	struct Vertex
 	{
