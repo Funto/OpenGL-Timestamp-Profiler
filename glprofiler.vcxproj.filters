@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{fb275b89-d14a-49d4-83d4-064c9c1217a2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="drawer2D.cpp">
@@ -82,13 +85,31 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="glew-1.7.0\lib\glew32.dll">
-      <Filter>Fichiers sources</Filter>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <Library Include="glfw-2.7.5.bin.WIN32\lib-msvc100\GLFW.lib">
       <Filter>Fichiers sources</Filter>
     </Library>
+    <Library Include="glew-1.7.0\lib\glew32.lib">
+      <Filter>Fichiers sources</Filter>
+    </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="media\color.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="media\color.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="media\font.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="media\font.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="media\grid.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="media\grid.vert">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
