@@ -57,7 +57,7 @@ const char* loadText(const char* filename)
 
 	// Get the file size
 	f.seekg(0, std::ios::end);
-	filesize = f.tellg();
+	filesize = (int)f.tellg();
 
 	// Allocate memory for the text and get the file's contents
 	buf = new char[filesize+1];

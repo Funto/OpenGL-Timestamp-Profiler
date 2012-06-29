@@ -15,19 +15,17 @@
 	#define DbgPrintf(...)
 #endif
 
-const Color	Scene::COLORS[NB_THREADS] = {
-	COLOR_DARK_RED,
-	COLOR_DARK_GREEN,
-	COLOR_DARK_BLUE,
-	COLOR_GRAY
-};
-
 bool Scene::init()
 {
 	m_multithread = false;
 	m_shut = false;
-	m_elapsed_time = 0.0f;
-	m_update_time = 0.0f;
+	m_elapsed_time = 0.0;
+	m_update_time = 0.0;
+
+	m_colors[0] = COLOR_DARK_RED;
+	m_colors[1] = COLOR_DARK_GREEN;
+	m_colors[2] = COLOR_DARK_BLUE;
+	m_colors[3] = COLOR_GRAY;
 
 	bool ok = true;
 
@@ -35,7 +33,7 @@ bool Scene::init()
 	for(int i=0 ; i < NB_THREADS ; i++)
 	{
 		m_thread_data[i].p_scene = this;
-		ok = ok && m_thread_data[i].grid.init((float)i, COLORS[i]);
+		ok = ok && m_thread_data[i].grid.init((float)i, m_colors[i]);
 		if(!ok)
 			return false;
 
@@ -110,7 +108,7 @@ void Scene::update(double elapsed, double t)
 		{
 			char str_marker[32];
 			sprintf(str_marker, "Multithread update %d", i);
-			PROFILER_PUSH_CPU_MARKER(str_marker, COLORS[i]);
+			PROFILER_PUSH_CPU_MARKER(str_marker, m_colors[i]);
 			m_thread_data[i].grid.update(elapsed, t);
 			PROFILER_POP_CPU_MARKER();
 		}

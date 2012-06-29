@@ -14,8 +14,7 @@ private:
 	static const int	NB_GRIDS_X = 2;
 	static const int	NB_GRIDS_Y = 2;
 	static const int	NB_THREADS = NB_GRIDS_X * NB_GRIDS_Y;
-	static const Color	COLORS[NB_THREADS];
-
+	
 	Camera	m_camera;
 
 	// Multithread update
@@ -29,11 +28,13 @@ private:
 		int				index;
 	};
 
+	Color			m_colors[NB_THREADS];
+
 	bool			m_multithread;
 	ThreadData		m_thread_data[NB_THREADS];
 	volatile bool	m_shut;
-	volatile float	m_elapsed_time;
-	volatile float	m_update_time;
+	volatile double	m_elapsed_time;
+	volatile double	m_update_time;
 
 public:
 	bool	init();

@@ -15,7 +15,7 @@ ThreadId threadCreate(ThreadProc proc, void* arg)
 
 ThreadId threadGetId()
 {
-	return (ThreadId)GetCurrentThread();
+	return (ThreadId)GetCurrentThreadId();	// TODO: add a new type
 }
 
 void threadJoin(ThreadId id)

@@ -264,7 +264,7 @@ void Profiler::draw()
 	const float x_offset	= MARGIN_X;
 	const float y_offset	= (MARGIN_Y + LINE_HEIGHT);
 
-	const double factor = profiler_width / (TIME_DRAWN_MS * 1000000.0);
+	const float factor = (float)(profiler_width / (TIME_DRAWN_MS * 1000000.0));
 
 	int displayed_frame = m_cur_frame - int(NB_RECORDED_FRAMES-1);
 	if(displayed_frame < 0)
@@ -347,9 +347,9 @@ void Profiler::draw()
 			end		-= frame_info->time_sync_start;
 
 			Rect	rect;
-			rect.x = x_offset + factor * (double)(start);
+			rect.x = x_offset + factor * (float)(start);
 			rect.y = y_offset + (i+GPU_COUNT)*LINE_HEIGHT;
-			rect.w = factor * (double)(end - start);
+			rect.w = factor * (float)(end - start);
 			rect.h = LINE_HEIGHT;
 
 			// Reduce vertically the size of the markers according to their layer
@@ -422,9 +422,9 @@ void Profiler::draw()
 				end -= first_start;
 
 				Rect	rect;
-				rect.x = x_offset + factor * (double)(start);
+				rect.x = x_offset + factor * (float)(start);
 				rect.y = y_offset;
-				rect.w = factor * (double)(end - start);
+				rect.w = factor * (float)(end - start);
 				rect.h = LINE_HEIGHT;
 
 				// Reduce vertically the size of the markers according to their layer

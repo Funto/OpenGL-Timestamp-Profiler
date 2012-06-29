@@ -32,7 +32,7 @@ void matrixTranslate(float result[16], const float v[3])
 
 void matrixRotateX(float result[16], float theta_degrees)
 {
-	theta_degrees *= (M_PI / 180.0f);
+	theta_degrees *= (PI_FLOAT / 180.0f);
 	float s = sinf(theta_degrees);
 	float c = cosf(theta_degrees);
 
@@ -44,7 +44,7 @@ void matrixRotateX(float result[16], float theta_degrees)
 
 void matrixRotateY(float result[16], float theta_degrees)
 {
-	theta_degrees *= (M_PI / 180.0f);
+	theta_degrees *= (PI_FLOAT / 180.0f);
 	float s = sinf(theta_degrees);
 	float c = cosf(theta_degrees);
 
@@ -56,7 +56,7 @@ void matrixRotateY(float result[16], float theta_degrees)
 
 void matrixRotateZ(float result[16], float theta_degrees)
 {
-	theta_degrees *= (M_PI / 180.0f);
+	theta_degrees *= (PI_FLOAT / 180.0f);
 	float s = sinf(theta_degrees);
 	float c = cosf(theta_degrees);
 
@@ -71,7 +71,7 @@ void matrixPerspective(float result[16], float fovy_degrees, float aspect_ratio,
 					  float znear, float zfar)
 {
 	float ymax, xmax;
-	ymax = znear * tanf(fovy_degrees * M_PI / 360.0f);
+	ymax = znear * tanf(fovy_degrees * PI_FLOAT / 360.0f);
 	xmax = ymax * aspect_ratio;
 	matrixFrustum(result, -xmax, xmax, -ymax, ymax, znear, zfar);
 }
@@ -83,7 +83,7 @@ void matrixFrustum(	float result[16],
 					float znear, float zfar)
 {
 	float temp, temp2, temp3, temp4;
-	temp = 2.0 * znear;
+	temp = 2.0f * znear;
 	temp2 = right - left;
 	temp3 = top - bottom;
 	temp4 = zfar - znear;
