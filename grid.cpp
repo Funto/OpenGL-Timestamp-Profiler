@@ -6,6 +6,16 @@
 #include <stdlib.h>
 #include <math.h>
 
+const int	Grid::GRID_WIDTH = 300;
+const int	Grid::GRID_HEIGHT = 300;
+
+const int	Grid::GRID_NB_INDICES = 6 * (GRID_WIDTH-1) * (GRID_HEIGHT-1);
+
+const float	Grid::GRID_WORLD_SIZE = 10.0f;
+
+const float	Grid::GRID_Y_FLOOR = -3.0f;
+const float	Grid::GRID_Y_DISTO = 0.5f;
+
 Grid::Grid()
 {
 	m_time_offset = 0.0f;
@@ -105,7 +115,7 @@ void Grid::shut()
 
 void Grid::update(double elapsed, double t)
 {
-	t += m_time_offset;
+	float shifted_t = (float)t + m_time_offset;
 
 	for(int x=0 ; x < GRID_WIDTH ; x++)
 	{
@@ -118,8 +128,8 @@ void Grid::update(double elapsed, double t)
 			int index = x + y*GRID_WIDTH;
 
 			float f = 0.0f;
-			f += cosf(10.0f*fx + 10.0f*t);
-			f += sinf(13.0f*fy + 8.0f*t);
+			f += cosf(10.0f*fx + 10.0f*shifted_t);
+			f += sinf(13.0f*fy + 8.0f*shifted_t);
 			m_grid_vertices[index].pos[1] = GRID_Y_FLOOR + f*GRID_Y_DISTO;
 		}
 	}
