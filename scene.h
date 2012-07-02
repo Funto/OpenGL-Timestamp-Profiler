@@ -22,7 +22,7 @@ private:
 	{
 		Scene*			p_scene;
 		Grid			grid;
-		ThreadId		thread_id;
+		ThreadHandle	thread_handle;
 		Event			update_event;
 		Event			main_event;
 		int				index;

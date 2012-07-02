@@ -14,23 +14,23 @@ extern double wait_updates;
 #include "drawer2D.h"
 #include "thread.h"
 #include <limits.h>
+// BEGIN BOUM
+#include <stdio.h>
+// END BOUM
 
 Profiler profiler;
 
 // Unit: percentage of the screen dimensions
 #define MARGIN_X	0.02f	// left and right margin
 #define MARGIN_Y	0.02f	// top margin
-//#define MARGIN_Y	0.1f	// top margin
 #define LINE_HEIGHT 0.01f   // height of a line representing a thread
-//#define LINE_HEIGHT 0.008f   // height of a line representing a thread
 #define TEXT_POS	0.02f, (1.0f-0.02f)	// Where we write text on-screen
 
 //#define TIME_DRAWN_MS 60.0 // the width of the profiler corresponds to TIME_DRAWN_MS milliseconds
 #define TIME_DRAWN_MS 120.0 // the width of the profiler corresponds to TIME_DRAWN_MS milliseconds
 //#define TIME_DRAWN_MS 15.0 // the width of the profiler corresponds to TIME_DRAWN_MS milliseconds
-//#define TIME_DRAWN_NS	(120*1000*1000)
 
-#define GPU_COUNT	1
+#define GPU_COUNT	1	// TODO: multiple GPUs are not supported
 
 //-----------------------------------------------------------------------------
 void Profiler::init(int win_w, int win_h, int mouse_x, int mouse_y)
@@ -59,7 +59,21 @@ void Profiler::init(int win_w, int win_h, int mouse_x, int mouse_y)
 //-----------------------------------------------------------------------------
 void Profiler::shut()
 {
-	// TODO: destroy all GPU timer queries
+	// Release GPU timer queries
+	for(size_t i=0 ; i < NB_GPU_MARKERS ; i++)
+	{
+		GpuMarker&	marker = m_gpu_thread_info.markers[i];
+		if(marker.id_query_start != INVALID_QUERY)
+		{
+			glDeleteQueries(1, &marker.id_query_start);
+			marker.id_query_start = INVALID_QUERY;
+		}
+		if(marker.id_query_end != INVALID_QUERY)
+		{
+			glDeleteQueries(1, &marker.id_query_end);
+			marker.id_query_end = INVALID_QUERY;
+		}
+	}
 
 	mutexDestroy(&m_cpu_mutex);
 }
@@ -102,20 +116,13 @@ void Profiler::popCpuMarker()
 	if(m_freeze_state == FROZEN)
 		return;
 
-/*	CpuThreadInfo& ti = getOrAddCpuThreadInfo();
-	ti.markers[ti.cur_pop_id].end = getTimeNs();
-	incrementCycle(&ti.cur_pop_id, NB_MARKERS_PER_CPU_THREAD);
-	ti.nb_pushed_markers--;
-*/
-
 	CpuThreadInfo& ti = getOrAddCpuThreadInfo();
 	assert(ti.nb_pushed_markers != 0);
 
-	int index = ti.cur_write_id-1;
-	while(ti.markers[index].end != INVALID_TIME)
-	{
-		decrementCycle(&index, NB_MARKERS_PER_CPU_THREAD);
-	}
+	int index = ti.cur_write_id - (int)ti.nb_pushed_markers;
+	if(index < 0)
+		index += NB_MARKERS_PER_CPU_THREAD;
+
 	ti.markers[index].end = getTimeNs();
 	ti.nb_pushed_markers--;
 
@@ -161,20 +168,22 @@ void Profiler::pushGpuMarker(const char* name, const Color& color)
 		return;
 
 	GpuThreadInfo&	ti = m_gpu_thread_info;
-	GpuMarker& marker = ti.markers[ti.cur_push_id];
+	GpuMarker& marker = ti.markers[ti.cur_write_id];
 
 	assert(marker.frame != m_cur_frame && "looping: too many markers, no free slots available");
 
+	// Issue timer query
 	if(marker.id_query_start == INVALID_QUERY)
 		glGenQueries(1, &marker.id_query_start);
 	glQueryCounter(marker.id_query_start, GL_TIMESTAMP);
 
+	// Fill in marker
 	marker.layer = ti.nb_pushed_markers;
 	strncpy(marker.name, name, MARKER_NAME_MAX_LENGTH);
 	marker.color = color;
 	marker.frame = m_cur_frame;
 
-	incrementCycle(&ti.cur_push_id, NB_GPU_MARKERS);
+	incrementCycle(&ti.cur_write_id, NB_GPU_MARKERS);
 	ti.nb_pushed_markers++;
 }
 
@@ -190,13 +199,18 @@ void Profiler::popGpuMarker()
 		return;
 
 	GpuThreadInfo& ti = m_gpu_thread_info;
-	GpuMarker&	marker = ti.markers[ti.cur_pop_id];
 
+	// Get the index for the marker to pop
+	int index = ti.cur_write_id - (int)(ti.nb_pushed_markers);
+	if(index < 0)
+		index += NB_GPU_MARKERS;
+	GpuMarker&	marker = ti.markers[index];
+
+	// Issue timer query
 	if(marker.id_query_end == INVALID_QUERY)
 		glGenQueries(1, &marker.id_query_end);
 	glQueryCounter(marker.id_query_end, GL_TIMESTAMP);
 
-	incrementCycle(&ti.cur_pop_id, NB_GPU_MARKERS);
 	ti.nb_pushed_markers--;
 }
 
@@ -498,7 +512,7 @@ void Profiler::onLeftClick()
 // Get the CpuThreadInfo corresponding to the calling thread
 Profiler::CpuThreadInfo& Profiler::getOrAddCpuThreadInfo()
 {
-	ThreadId	thread_id = threadGetId();
+	ThreadId	thread_id = threadGetCurrentId();
 
 	for(size_t i = m_cpu_thread_infos.begin();
 		i != m_cpu_thread_infos.getMaxSize() ;

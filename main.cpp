@@ -22,6 +22,10 @@
 #include "thread.h"
 #include "math_utils.h"
 
+//#define USE_FORWARD_COMPATIBLE_CONTEXT_GL_3_3
+//#define USE_FORWARD_COMPATIBLE_CONTEXT_GL_4
+//#define USE_DEBUG_CONTEXT
+
 #define BASE_TITLE	"Profiler - OpenGL Insights"
 #define WIN_WIDTH	640
 #define WIN_HEIGHT	480
@@ -38,18 +42,17 @@ Scene					scene;
 void GLFWCALL onMouseClick(int x, int y);
 void GLFWCALL onKey(int key, int action);
 
-void DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
+void debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 				   GLsizei length, const GLchar* message, GLvoid* userParam)
 {
-	// TODO
-	printf("*** DebugCallback\n");
+	fprintf(stderr, "GL debug: %s\n", message);
 }
 
 void fpsCount(const char* base_title)
 {
 	static bool first_time = false;
 	static double t, t0;
-	static int fps = 0, frames = 0;	// Nombre de FPS et compteur de frames
+	static int fps = 0, frames = 0;
 
 	if(first_time)
 	{
@@ -57,7 +60,6 @@ void fpsCount(const char* base_title)
 		first_time = true;
 	}
 
-	// Calcul des FPS
 	t = glfwGetTime();
 
 	if( (t-t0) > 1.0)
@@ -89,15 +91,19 @@ int main()
 	}
 
 	// Open a window and create its OpenGL context
-//	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR,  3);
+#ifdef USE_FORWARD_COMPATIBLE_CONTEXT_GL_3_3
+	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR,  3);
+	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR,  3);
+	glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#elif defined USE_FORWARD_COMPATIBLE_CONTEXT_GL_4
+	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR,  4);
+	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR,  0);
+	glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
 
-	//glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR,  3);
-//	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR,  1);
-
-	//glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-//	glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_FALSE);
-
-//	glfwOpenWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+#ifdef USE_DEBUG_CONTEXT
+	glfwOpenWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, GL_TRUE);
+#endif
 
 	if( !glfwOpenWindow( WIN_WIDTH, WIN_HEIGHT, 0,0,0,0, 0,0, GLFW_WINDOW ) )
 	{
@@ -110,7 +116,10 @@ int main()
 	glfwSetWindowTitle( BASE_TITLE );
 
 	if(GLEW_ARB_debug_output)
-		glDebugMessageCallbackARB((GLDEBUGPROCARB)&DebugCallback, NULL);
+	{
+		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		glDebugMessageCallbackARB((GLDEBUGPROCARB)&debugCallback, NULL);
+	}
 
 	// Load the OpenGL implementation + available extensions
 	GLenum error = glewInit();

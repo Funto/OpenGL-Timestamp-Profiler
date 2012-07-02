@@ -8,19 +8,19 @@
 #ifdef WIN32
 
 // --- Thread ---
-ThreadId threadCreate(ThreadProc proc, void* arg)
+ThreadHandle threadCreate(ThreadProc proc, void* arg)
 {
-	return CreateThread(0, 0, (LPTHREAD_START_ROUTINE)proc, arg, 0, 0);
+	return (ThreadHandle)CreateThread(0, 0, (LPTHREAD_START_ROUTINE)proc, arg, 0, 0);
 }
 
-ThreadId threadGetId()
+ThreadId threadGetCurrentId()
 {
-	return (ThreadId)GetCurrentThreadId();	// TODO: add a new type
+	return (ThreadId)GetCurrentThreadId();
 }
 
-void threadJoin(ThreadId id)
+void threadJoin(ThreadHandle thread_handle)
 {
-	DWORD	dwWaitResult = WaitForSingleObject(id, INFINITE);
+	DWORD	dwWaitResult = WaitForSingleObject(thread_handle, INFINITE);
 	assert(dwWaitResult == WAIT_OBJECT_0);
 }
 
@@ -79,21 +79,21 @@ void eventWait(Event* event)
 #else
 
 // --- Thread ---
-ThreadId threadCreate(ThreadProc proc, void* arg)
+ThreadHandle threadCreate(ThreadProc proc, void* arg)
 {
-	ThreadId	thread_id;
-	pthread_create((pthread_t*)(&thread_id), NULL, proc, arg);
-	return thread_id;
+	ThreadHandle	thread_handle;
+	pthread_create((pthread_t*)(&thread_handle), NULL, proc, arg);
+	return thread_handle;
 }
 
-ThreadId threadGetId()
+ThreadId threadGetCurrentId()
 {
 	return (ThreadId)pthread_self();
 }
 
-void threadJoin(ThreadId id)
+void threadJoin(ThreadHandle thread_handle)
 {
-	pthread_join(id, NULL);
+	pthread_join(thread_handle, NULL);
 }
 
 // --- Mutex ---

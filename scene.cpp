@@ -40,7 +40,7 @@ bool Scene::init()
 		eventCreate(&m_thread_data[i].update_event);
 		eventCreate(&m_thread_data[i].main_event);
 		m_thread_data[i].index = i;
-		m_thread_data[i].thread_id = threadCreate(&threadUpdateWrapper, &m_thread_data[i]);
+		m_thread_data[i].thread_handle = threadCreate(&threadUpdateWrapper, &m_thread_data[i]);
 	}
 
 	return ok;
@@ -57,7 +57,7 @@ void Scene::shut()
 
 		DbgPrintf("[main] join %d\n", i);
 
-		threadJoin(m_thread_data[i].thread_id);
+		threadJoin(m_thread_data[i].thread_handle);
 
 		DbgPrintf("[main] destroy update event %d\n", i);
 		eventDestroy(&m_thread_data[i].update_event);

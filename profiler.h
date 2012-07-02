@@ -11,12 +11,11 @@
 #include "thread.h"
 #include "utils.h"
 
+#define ENABLE_PROFILER	// comment this to disable the profiler
+//#define PROFILER_CHEATING	// TODO: temporary!!
+
 #define INVALID_TIME	((uint64_t)(-1))
 #define INVALID_QUERY	((GLuint)0)
-
-#define ENABLE_PROFILER	// comment this to remove the profiler
-
-//#define PROFILER_CHEATING	// TODO: temporary!!
 
 #ifndef ENABLE_PROFILER
 	#define PROFILER_INIT(win_w, win_h, mouse_x, mouse_y)
@@ -65,7 +64,7 @@ private:
 	static const size_t	NB_GPU_MARKERS = NB_RECORDED_FRAMES * NB_MAX_GPU_MARKERS_PER_FRAME;
 
 	static const size_t	NB_MAX_CPU_THREADS = 32;
-	static const size_t	NB_FRAMES_BEFORE_KICK_CPU_THREAD = 4;
+	static const size_t	NB_FRAMES_BEFORE_KICK_CPU_THREAD = 4;	// TODO
 
 	static const size_t	MARKER_NAME_MAX_LENGTH = 32;
 
@@ -114,12 +113,11 @@ private:
 		GpuMarker	markers[NB_GPU_MARKERS];
 
 		int			cur_read_id;
-		int			cur_push_id;
-		int			cur_pop_id;
+		int			cur_write_id;
 
 		size_t		nb_pushed_markers;
 
-		void	init()	{cur_read_id=cur_push_id=cur_pop_id=0; nb_pushed_markers=0;}
+		void	init()	{cur_read_id=cur_write_id=0; nb_pushed_markers=0;}
 	};
 
 	typedef	HoleArray<CpuThreadInfo, NB_MAX_CPU_THREADS>	CpuThreadInfoList;
