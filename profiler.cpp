@@ -22,7 +22,7 @@ Profiler profiler;
 
 // Unit: percentage of the screen dimensions
 #define MARGIN_X	0.02f	// left and right margin
-#define MARGIN_Y	0.02f	// top margin
+#define MARGIN_Y	0.02f	// bottom margin
 #define LINE_HEIGHT 0.01f   // height of a line representing a thread
 #define TEXT_POS	0.02f, (1.0f-0.02f)	// Where we write text on-screen
 
@@ -123,7 +123,11 @@ void Profiler::popCpuMarker()
 	if(index < 0)
 		index += NB_MARKERS_PER_CPU_THREAD;
 
-	ti.markers[index].end = getTimeNs();
+
+	Marker& marker = ti.markers[index];
+	assert(marker.end == INVALID_TIME);
+	marker.end = getTimeNs();
+
 	ti.nb_pushed_markers--;
 
 #ifdef PROFILER_CHEATING
@@ -215,7 +219,7 @@ void Profiler::popGpuMarker()
 }
 
 //-----------------------------------------------------------------------------
-/// Swap buffering for the markers
+/// Update frame information and frame counter
 void Profiler::synchronizeFrame()
 {
 	if(!m_enabled)
@@ -231,7 +235,10 @@ void Profiler::synchronizeFrame()
 
 	// Freeze/unfreeze as needed
 	if(m_freeze_state == WAITING_FOR_FREEZE)
+	{
 		m_freeze_state = FROZEN;
+		return; // TODO
+	}
 	else if(m_freeze_state == WAITING_FOR_UNFREEZE)
 		m_freeze_state = UNFROZEN;
 
@@ -328,6 +335,7 @@ void Profiler::draw()
 */
 		// Jump back to the last marker that ends after the start of this frame.
 		// Avoid going to a frame older than displayed_frame-1.
+		// -> handle markers that overlap the previous and the displayed frame
 		int read_id = ti.cur_read_id;
 		while(true)
 		{
@@ -399,7 +407,6 @@ void Profiler::draw()
 		// Get the times and draw the markers
 		uint64_t	first_start = INVALID_TIME;
 
-		int debug_nb_markers = 0;
 		while(ti.markers[read_id].frame == displayed_frame)
 		//while(ti.markers[read_id].frame <= displayed_frame)
 		{
@@ -446,14 +453,10 @@ void Profiler::draw()
 				rect.h -= 0.004f*marker.layer;
 
 				drawer2D.drawRect(rect, marker.color);
-
-				debug_nb_markers++;
 			}
 
 			incrementCycle(&read_id, NB_GPU_MARKERS);
 		}
-
-		//printf("debug_nb_markers == %d\n", debug_nb_markers);
 
 		ti.cur_read_id = read_id;
 	}
