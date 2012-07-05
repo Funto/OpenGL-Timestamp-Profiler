@@ -119,10 +119,10 @@ void Profiler::popCpuMarker()
 	CpuThreadInfo& ti = getOrAddCpuThreadInfo();
 	assert(ti.nb_pushed_markers != 0);
 
-	int index = ti.cur_write_id - (int)ti.nb_pushed_markers;
-	if(index < 0)
-		index += NB_MARKERS_PER_CPU_THREAD;
-
+	// Get the most recent marker that has not been closed yet
+	int index = ti.cur_write_id-1;
+	while(ti.markers[index].end != INVALID_TIME)	// skip closed markers
+		decrementCycle(&index, NB_MARKERS_PER_CPU_THREAD);
 
 	Marker& marker = ti.markers[index];
 	assert(marker.end == INVALID_TIME);
@@ -204,10 +204,20 @@ void Profiler::popGpuMarker()
 
 	GpuThreadInfo& ti = m_gpu_thread_info;
 
+	// BEGIN BOUM
+	// TODO: the bug appears when we looped (not present when we increase the number of GPU markers)
+	// -> should be present with CPU markers too
+	// Get the most recent marker that has not been closed yet
+	int index = ti.cur_write_id-1;
+	while(ti.markers[index].end != INVALID_TIME)	// skip closed markers
+		decrementCycle(&index, NB_GPU_MARKERS);
+
 	// Get the index for the marker to pop
-	int index = ti.cur_write_id - (int)(ti.nb_pushed_markers);
-	if(index < 0)
-		index += NB_GPU_MARKERS;
+//	int index = ti.cur_write_id - (int)(ti.nb_pushed_markers);
+//	if(index < 0)
+//		index += NB_GPU_MARKERS;
+	// END BOUM
+
 	GpuMarker&	marker = ti.markers[index];
 
 	// Issue timer query
