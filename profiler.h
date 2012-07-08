@@ -187,6 +187,7 @@ protected:
 	CpuThreadInfo&	getOrAddCpuThreadInfo();
 
 	void	drawBackground();
+	void	drawHoveredMarkers(const int *first_drawn_markers);
 	void	updateBackgroundRect();
 };
 

@@ -32,6 +32,12 @@ Profiler profiler;
 
 #define GPU_COUNT	1	// TODO: multiple GPUs are not supported
 
+// -----
+#define	PROFILER_WIDTH		(1.0f - 2.0f*MARGIN_X)
+#define	X_OFFSET			MARGIN_X
+#define	Y_OFFSET			(MARGIN_Y + LINE_HEIGHT)
+#define	X_FACTOR			( (float)(PROFILER_WIDTH / (TIME_DRAWN_MS * 1000000.0)) )
+
 //-----------------------------------------------------------------------------
 void Profiler::init(int win_w, int win_h, int mouse_x, int mouse_y)
 {
@@ -290,16 +296,12 @@ void Profiler::draw()
 
 	drawBackground();
 
-	// Compute some values for drawing
-	const float profiler_width = (1.0f - 2.0f*MARGIN_X);
-	const float x_offset	= MARGIN_X;
-	const float y_offset	= (MARGIN_Y + LINE_HEIGHT);
-
-	const float factor = (float)(profiler_width / (TIME_DRAWN_MS * 1000000.0));
-
 	int displayed_frame = m_cur_frame - int(NB_RECORDED_FRAMES-1);
 	if(displayed_frame < 0)
 		return;
+
+	int		first_drawn_markers[GPU_COUNT + NB_MAX_CPU_THREADS];
+	int		thread_index = 0;
 
 	// --- Find the FrameInfo (start and end times) for the frame we want to display ---
 	FrameInfo* frame_info = NULL;
@@ -319,80 +321,12 @@ void Profiler::draw()
 	// --- Draw the end of the frame ---
 	{
 		Rect	rect_end;
-		rect_end.x = x_offset + factor*frame_delta_time;
+		rect_end.x = X_OFFSET + X_FACTOR*frame_delta_time;
 		rect_end.y = m_back_rect.y;
 		rect_end.w = 0.003f;
 		rect_end.h = m_back_rect.h;
 
 		drawer2D.drawRect(rect_end, COLOR_BLACK);
-	}
-
-	// ---- Draw the CPU markers ----
-	// For each thread:
-	for(size_t i=m_cpu_thread_infos.begin() ;
-		i != m_cpu_thread_infos.getMaxSize() ;
-		i = m_cpu_thread_infos.next(i))
-	{
-		CpuThreadInfo	&ti = m_cpu_thread_infos.get(i);
-
-		// Jump back to the last marker that ends after the start of this frame
-/*		int read_id = ti.cur_read_id;
-		while(ti.markers[read_id].frame >= 0 &&
-			  ti.markers[read_id].end > frame_info->time_sync_start)
-		{
-			decrementCycle(&read_id, NB_MARKERS_PER_CPU_THREAD);
-		}
-*/
-		// Jump back to the last marker that ends after the start of this frame.
-		// Avoid going to a frame older than displayed_frame-1.
-		// -> handle markers that overlap the previous and the displayed frame
-		int read_id = ti.cur_read_id;
-		while(true)
-		{
-			int candidate_id = read_id;
-			decrementCycle(&candidate_id, NB_MARKERS_PER_CPU_THREAD);
-
-			if(ti.markers[candidate_id].frame >= displayed_frame-1 &&
-			   ti.markers[candidate_id].end > frame_info->time_sync_start)
-			{
-				read_id = candidate_id;
-				continue;
-			}
-
-			break;
-		}
-
-		// In the worst case, we try to draw a marker that is out of this frame:
-		// it just gets clamped and nothing is visible
-
-		// Draw the markers
-		while(ti.markers[read_id].frame >= displayed_frame-1 &&
-			  ti.markers[read_id].frame <= displayed_frame)
-		{
-			CpuMarker	&marker = ti.markers[read_id];
-
-			uint64_t	start, end;
-			start	= clamp(marker.start,	frame_info->time_sync_start, frame_info->time_sync_end);
-			end		= clamp(marker.end,		frame_info->time_sync_start, frame_info->time_sync_end);
-
-			start	-= frame_info->time_sync_start;
-			end		-= frame_info->time_sync_start;
-
-			Rect	rect;
-			rect.x = x_offset + factor * (float)(start);
-			rect.y = y_offset + (i+GPU_COUNT)*LINE_HEIGHT;
-			rect.w = factor * (float)(end - start);
-			rect.h = LINE_HEIGHT;
-
-			// Reduce vertically the size of the markers according to their layer
-			rect.y += 0.002f*marker.layer;
-			rect.h -= 0.004f*marker.layer;
-
-			drawer2D.drawRect(rect, marker.color);
-			incrementCycle(&read_id, NB_MARKERS_PER_CPU_THREAD);
-		}
-
-		ti.cur_read_id = read_id;
 	}
 
 	// ---- Draw the GPU markers ----
@@ -413,6 +347,7 @@ void Profiler::draw()
 		// it just gets clamped and nothing is visible
 		// --- END TODO ---
 
+		first_drawn_markers[thread_index++] = read_id;
 
 		// Get the times and draw the markers
 		uint64_t	first_start = INVALID_TIME;
@@ -453,9 +388,9 @@ void Profiler::draw()
 				end -= first_start;
 
 				Rect	rect;
-				rect.x = x_offset + factor * (float)(start);
-				rect.y = y_offset;
-				rect.w = factor * (float)(end - start);
+				rect.x = X_OFFSET + X_FACTOR * (float)(start);
+				rect.y = Y_OFFSET;
+				rect.w = X_FACTOR * (float)(end - start);
 				rect.h = LINE_HEIGHT;
 
 				// Reduce vertically the size of the markers according to their layer
@@ -471,22 +406,77 @@ void Profiler::draw()
 		ti.cur_read_id = read_id;
 	}
 
-	// Draw the hovered markers' names
-/*	gui::ScalableFont* font = GUIEngine::getFont();
-	if(font)
+	// ---- Draw the CPU markers ----
+	// For each thread:
+	for(size_t i=m_cpu_thread_infos.begin() ;
+		i != m_cpu_thread_infos.getMaxSize() ;
+		i = m_cpu_thread_infos.next(i))
 	{
-		core::stringw text;
-		while(!hovered_markers.empty())
+		CpuThreadInfo	&ti = m_cpu_thread_infos.get(i);
+
+		// Jump back to the last marker that ends after the start of this frame
+/*		int read_id = ti.cur_read_id;
+		while(ti.markers[read_id].frame >= 0 &&
+			  ti.markers[read_id].end > frame_info->time_sync_start)
 		{
-			Marker& m = hovered_markers.top();
-			std::ostringstream oss;
-			oss << m.name << " [" << (m.end-m.start) << " ms]" << std::endl;
-			text += oss.str().c_str();
-			hovered_markers.pop();
+			decrementCycle(&read_id, NB_MARKERS_PER_CPU_THREAD);
 		}
-		font->draw(text, MARKERS_NAMES_POS, video::SColor(0xFF, 0xFF, 0x00, 0x00));
-	}
 */
+		// Jump back to the last marker that ends after the start of this frame.
+		// Avoid going to a frame older than displayed_frame-1.
+		// -> handle markers that overlap the previous and the displayed frame
+		int read_id = ti.cur_read_id;
+		while(true)
+		{
+			int candidate_id = read_id;
+			decrementCycle(&candidate_id, NB_MARKERS_PER_CPU_THREAD);
+
+			if(ti.markers[candidate_id].frame >= displayed_frame-1 &&
+			   ti.markers[candidate_id].end > frame_info->time_sync_start)
+			{
+				read_id = candidate_id;
+				continue;
+			}
+
+			break;
+		}
+
+		first_drawn_markers[thread_index++] = read_id;
+
+		// In the worst case, we try to draw a marker that is out of this frame:
+		// it just gets clamped and nothing is visible
+
+		// Draw the markers
+		while(ti.markers[read_id].frame >= displayed_frame-1 &&
+			  ti.markers[read_id].frame <= displayed_frame)
+		{
+			CpuMarker	&marker = ti.markers[read_id];
+
+			uint64_t	start, end;
+			start	= clamp(marker.start,	frame_info->time_sync_start, frame_info->time_sync_end);
+			end		= clamp(marker.end,		frame_info->time_sync_start, frame_info->time_sync_end);
+
+			start	-= frame_info->time_sync_start;
+			end		-= frame_info->time_sync_start;
+
+			Rect	rect;
+			rect.x = X_OFFSET + X_FACTOR * (float)(start);
+			rect.y = Y_OFFSET + (i+GPU_COUNT)*LINE_HEIGHT;
+			rect.w = X_FACTOR * (float)(end - start);
+			rect.h = LINE_HEIGHT;
+
+			// Reduce vertically the size of the markers according to their layer
+			rect.y += 0.002f*marker.layer;
+			rect.h -= 0.004f*marker.layer;
+
+			drawer2D.drawRect(rect, marker.color);
+			incrementCycle(&read_id, NB_MARKERS_PER_CPU_THREAD);
+		}
+
+		ti.cur_read_id = read_id;
+	}
+
+	drawHoveredMarkers(first_drawn_markers);
 }
 
 //-----------------------------------------------------------------------------
@@ -551,13 +541,142 @@ Profiler::CpuThreadInfo& Profiler::getOrAddCpuThreadInfo()
 }
 
 //-----------------------------------------------------------------------------
-/// Helper to draw a white background
 void Profiler::drawBackground()
 {
 	Color	back_color = COLOR_WHITE;
 	if(m_freeze_state == FROZEN)
 		back_color.set(COLOR_LIGHT_GRAY);
 	drawer2D.drawRect(m_back_rect, back_color);
+}
+
+void Profiler::drawHoveredMarkers(const int *first_drawn_markers)
+{
+	// Compute some values for drawing
+
+	float fx = float(m_mouse_x) / float(m_win_w);
+	float fy = float(m_win_h-1 - m_mouse_y) / float(m_win_h);
+
+	/*
+	rect.x = x_offset + factor * (float)(start);
+	rect.y = y_offset + (i+GPU_COUNT)*LINE_HEIGHT;
+	rect.w = factor * (float)(end - start);
+	rect.h = LINE_HEIGHT;
+	*/
+
+	/*#define	PROFILER_WIDTH		(1.0f - 2.0f*MARGIN_X)
+#define	X_OFFSET			MARGIN_X
+#define	Y_OFFSET			(MARGIN_Y + LINE_HEIGHT)
+#define	X_FACTOR			( (float)(PROFILER_WIDTH / (TIME_DRAWN_MS * 1000000.0)) )*/
+
+	size_t			nb_max_markers = 0;
+	const Marker	*markers = NULL;
+
+	Rect	rect;
+	rect.x = X_OFFSET;
+	rect.y = Y_OFFSET;
+	rect.w = PROFILER_WIDTH;
+	rect.h = LINE_HEIGHT;
+
+	if(rect.isPointInside(fx, fy))
+	{
+		//printf("GPU\n");
+		nb_max_markers	= NB_GPU_MARKERS;
+		markers			= &m_gpu_thread_info.markers[0];
+	}
+	else
+	{
+		for(size_t i=m_cpu_thread_infos.begin() ;
+			i != m_cpu_thread_infos.getMaxSize() ;
+			i = m_cpu_thread_infos.next(i))
+		{
+			rect.y += LINE_HEIGHT;
+			if(rect.isPointInside(fx, fy))
+			{
+				//printf("CPU %d\n", i);
+				nb_max_markers	= NB_MARKERS_PER_CPU_THREAD;
+				markers			= &m_gpu_thread_info.markers[0];
+			}
+		}
+	}
+
+	// ---- Test the CPU lines ----
+/*	// For each thread:
+	for(size_t i=m_cpu_thread_infos.begin() ;
+		i != m_cpu_thread_infos.getMaxSize() ;
+		i = m_cpu_thread_infos.next(i))
+	{
+		CpuThreadInfo	&ti = m_cpu_thread_infos.get(i);
+	}	*/
+
+	/*
+	if(m_back_rect.isPointInside(fx, fy))
+	{
+		static int i=0;
+		printf("DEBUG: inside! %d\n", i++);
+	}
+	*/
+	/*
+	bool isPointInside(float _x, float _y) const
+	{
+		return (_x >= x && _x < x+w		&&
+				_y >= y && _y < y+h		);
+	}
+	*/
+	/*	gui::ScalableFont* font = GUIEngine::getFont();
+		if(font)
+		{
+			core::stringw text;
+			while(!hovered_markers.empty())
+			{
+				Marker& m = hovered_markers.top();
+				std::ostringstream oss;
+				oss << m.name << " [" << (m.end-m.start) << " ms]" << std::endl;
+				text += oss.str().c_str();
+				hovered_markers.pop();
+			}
+			font->draw(text, MARKERS_NAMES_POS, video::SColor(0xFF, 0xFF, 0x00, 0x00));
+		}
+	*/
+
+	// Draw the hovered markers' names
+	/*
+	float fx = float(m_mouse_x) / float(m_win_w);
+	float fy = float(m_win_h-1 - m_mouse_y) / float(m_win_h);
+
+	if(m_back_rect.isPointInside(fx, fy))
+	{
+		switch(m_freeze_state)
+		{
+		case UNFROZEN:
+			m_freeze_state = WAITING_FOR_FREEZE;
+			break;
+
+		case FROZEN:
+			m_freeze_state = WAITING_FOR_UNFREEZE;
+			break;
+
+		case WAITING_FOR_FREEZE:
+		case WAITING_FOR_UNFREEZE:
+			// the user should not be that quick, and we prefer avoiding to introduce
+			// bugs by unfrozing it while it has not frozen yet.
+			// Same the other way around.
+			break;
+		}
+	}
+	*/
+/*
+#ifdef PROFILER_CHEATING
+		char str[256];
+		sprintf(str, "[%2.1lfms] Full frame", full_frame);
+		drawer2D.drawString(str, 0.01f, 0.25f, COLOR_GRAY);
+
+		sprintf(str, "[%2.1lfms]  Update scene", update);
+		drawer2D.drawString(str, 0.01f, 0.2f, COLOR_GREEN);
+
+		sprintf(str, "[%2.1lfms]   Wait for thread updates", wait_updates);
+		drawer2D.drawString(str, 0.01f, 0.15f, COLOR_YELLOW);
+#endif
+*/
 }
 
 void Profiler::updateBackgroundRect()
