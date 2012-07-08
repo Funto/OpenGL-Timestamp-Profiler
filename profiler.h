@@ -176,6 +176,8 @@ public:
 	void	setEnabled(bool enabled)	{m_enabled=enabled;}
 	bool	isEnabled() const			{return m_enabled;}
 
+	bool	isFrozen() const			{return m_freeze_state == FROZEN || m_freeze_state == WAITING_FOR_UNFREEZE;}
+
 	// Input handling
 	void	onMousePos(int x, int y)	{m_mouse_x=x;	m_mouse_y=y;}
 	void	onLeftClick();

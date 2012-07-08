@@ -29,8 +29,13 @@ Profiler profiler;
 #define	Y_OFFSET			(MARGIN_Y + LINE_HEIGHT)
 #define	X_FACTOR			( (float)(PROFILER_WIDTH / (TIME_DRAWN_MS * 1000000.0)) )
 
+#define Y_SCALE_OFFSET		0.002f	// By how much do we reduce the height when displaying
+									// a marker that is lower in the hierarchy
+
 #define NB_MAX_TEXT_LINES	20
 #define Y_TEXT_MARGIN		0.05f	// size between 2 lines of text
+
+#define COLOR_FROZEN		Color(0xD0, 0xD0, 0xD0)
 
 //-----------------------------------------------------------------------------
 void Profiler::init(int win_w, int win_h, int mouse_x, int mouse_y)
@@ -86,7 +91,7 @@ void Profiler::pushCpuMarker(const char* name, const Color& color)
 		return;
 
 	// Don't do anything when frozen
-	if(m_freeze_state == FROZEN)
+	if(isFrozen())
 		return;
 
 	CpuThreadInfo& ti = getOrAddCpuThreadInfo();
@@ -113,7 +118,7 @@ void Profiler::popCpuMarker()
 		return;
 
 	// Don't do anything when frozen
-	if(m_freeze_state == FROZEN)
+	if(isFrozen())
 		return;
 
 	CpuThreadInfo& ti = getOrAddCpuThreadInfo();
@@ -139,7 +144,7 @@ void Profiler::pushGpuMarker(const char* name, const Color& color)
 		return;
 
 	// Don't do anything when frozen
-	if(m_freeze_state == FROZEN)
+	if(isFrozen())
 		return;
 
 	GpuThreadInfo&	ti = m_gpu_thread_info;
@@ -172,7 +177,7 @@ void Profiler::popGpuMarker()
 		return;
 
 	// Don't do anything when frozen
-	if(m_freeze_state == FROZEN)
+	if(isFrozen())
 		return;
 
 	GpuThreadInfo& ti = m_gpu_thread_info;
@@ -208,18 +213,15 @@ void Profiler::synchronizeFrame()
 	if(!m_enabled)
 		return;
 
-	// Don't do anything when frozen
-	if(m_freeze_state == FROZEN)
-		return;
-
 	// Freeze/unfreeze as needed
 	if(m_freeze_state == WAITING_FOR_FREEZE)
-	{
 		m_freeze_state = FROZEN;
-		return; // TODO
-	}
 	else if(m_freeze_state == WAITING_FOR_UNFREEZE)
 		m_freeze_state = UNFROZEN;
+
+	// Don't do anything when frozen
+	if(isFrozen())
+		return;
 
 	// Next frame
 	m_cur_frame++;
@@ -308,6 +310,8 @@ void Profiler::draw()
 		// Get the times and draw the markers
 		uint64_t	first_start = INVALID_TIME;
 
+		//while(ti.markers[read_id].frame >= displayed_frame-1 &&
+		//	  ti.markers[read_id].frame <= displayed_frame)
 		while(ti.markers[read_id].frame == displayed_frame)
 		//while(ti.markers[read_id].frame <= displayed_frame)
 		{
@@ -350,8 +354,8 @@ void Profiler::draw()
 				rect.h = LINE_HEIGHT;
 
 				// Reduce vertically the size of the markers according to their layer
-				rect.y += 0.002f*marker.layer;
-				rect.h -= 0.004f*marker.layer;
+				rect.y += Y_SCALE_OFFSET		*marker.layer;
+				rect.h -= (2.0f*Y_SCALE_OFFSET)	*marker.layer;
 
 				drawer2D.drawRect(rect, marker.color);
 			}
@@ -459,9 +463,7 @@ void Profiler::onLeftClick()
 
 		case WAITING_FOR_FREEZE:
 		case WAITING_FOR_UNFREEZE:
-			// the user should not be that quick, and we prefer avoiding to introduce
-			// bugs by unfrozing it while it has not frozen yet.
-			// Same the other way around.
+			assert(false && "should not happen - synchronizeFrame() should be called between 2 calls to onLeftClick()");
 			break;
 		}
 	}
@@ -499,17 +501,13 @@ Profiler::CpuThreadInfo& Profiler::getOrAddCpuThreadInfo()
 //-----------------------------------------------------------------------------
 void Profiler::drawBackground()
 {
-	Color	back_color = COLOR_WHITE;
-	if(m_freeze_state == FROZEN)
-		back_color.set(COLOR_LIGHT_GRAY);
-	drawer2D.drawRect(m_back_rect, back_color);
+	drawer2D.drawRect(m_back_rect, isFrozen() ? COLOR_FROZEN : COLOR_WHITE);
 }
 
 /// Draw text information for the markers that are hovered by the mouse pointer
 void Profiler::drawHoveredMarkersText(const int *read_indices, const FrameInfo* frame_info)
 {
 	// Compute some values for drawing
-
 	float fx = float(m_mouse_x) / float(m_win_w);
 	float fy = float(m_win_h-1 - m_mouse_y) / float(m_win_h);
 
