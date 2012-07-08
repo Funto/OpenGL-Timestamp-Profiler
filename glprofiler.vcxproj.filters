@@ -1,95 +1,90 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Fichiers sources">
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{fb275b89-d14a-49d4-83d4-064c9c1217a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Sources">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Fichiers d%27en-tête">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
-    </Filter>
-    <Filter Include="Fichiers de ressources">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
-    <Filter Include="Shaders">
-      <UniqueIdentifier>{fb275b89-d14a-49d4-83d4-064c9c1217a2}</UniqueIdentifier>
+    <Filter Include="Libraries">
+      <UniqueIdentifier>{a717e8d0-01bc-4c3f-aa31-5f3560cd44f6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="drawer2D.cpp">
-      <Filter>Fichiers sources</Filter>
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="grid.cpp">
-      <Filter>Fichiers sources</Filter>
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="hp_timer.cpp">
-      <Filter>Fichiers sources</Filter>
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
-      <Filter>Fichiers sources</Filter>
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="math_utils.cpp">
-      <Filter>Fichiers sources</Filter>
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="profiler.cpp">
-      <Filter>Fichiers sources</Filter>
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="scene.cpp">
-      <Filter>Fichiers sources</Filter>
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="tgaloader.cpp">
-      <Filter>Fichiers sources</Filter>
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="thread.cpp">
-      <Filter>Fichiers sources</Filter>
+      <Filter>Sources</Filter>
     </ClCompile>
     <ClCompile Include="utils.cpp">
-      <Filter>Fichiers sources</Filter>
+      <Filter>Sources</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="camera.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="drawer2D.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="grid.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="hole_array.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="hp_timer.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="math_utils.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="profiler.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="scene.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="tgaloader.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="thread.h">
-      <Filter>Fichiers d%27en-tête</Filter>
+      <Filter>Sources</Filter>
     </ClInclude>
     <ClInclude Include="utils.h">
-      <Filter>Fichiers d%27en-tête</Filter>
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="drawer2D.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="grid.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="hole_array.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="hp_timer.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="math_utils.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="profiler.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="scene.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="tgaloader.h">
+      <Filter>Sources</Filter>
+    </ClInclude>
+    <ClInclude Include="thread.h">
+      <Filter>Sources</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="glfw-2.7.5.bin.WIN32\lib-msvc100\GLFW.lib">
-      <Filter>Fichiers sources</Filter>
-    </Library>
     <Library Include="glew-1.7.0\lib\glew32.lib">
-      <Filter>Fichiers sources</Filter>
+      <Filter>Libraries</Filter>
+    </Library>
+    <Library Include="glfw-2.7.5.bin.WIN32\lib-msvc100\GLFW.lib">
+      <Filter>Libraries</Filter>
     </Library>
   </ItemGroup>
   <ItemGroup>
