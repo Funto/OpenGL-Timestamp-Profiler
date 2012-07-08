@@ -24,7 +24,6 @@ Profiler profiler;
 #define MARGIN_X	0.02f	// left and right margin
 #define MARGIN_Y	0.02f	// bottom margin
 #define LINE_HEIGHT 0.01f   // height of a line representing a thread
-#define TEXT_POS	0.02f, (1.0f-0.02f)	// Where we write text on-screen
 
 //#define TIME_DRAWN_MS 60.0 // the width of the profiler corresponds to TIME_DRAWN_MS milliseconds
 #define TIME_DRAWN_MS 120.0 // the width of the profiler corresponds to TIME_DRAWN_MS milliseconds
@@ -37,6 +36,9 @@ Profiler profiler;
 #define	X_OFFSET			MARGIN_X
 #define	Y_OFFSET			(MARGIN_Y + LINE_HEIGHT)
 #define	X_FACTOR			( (float)(PROFILER_WIDTH / (TIME_DRAWN_MS * 1000000.0)) )
+
+//#define TEXT_POS	0.02f, (1.0f-0.02f)	// Where we write text on-screen	// TODO
+//#define Y_TEXT_POS			( LINE_HEIGHT * (GPU_COUNT + m_cpu_thread_infos.getMaxSize()) )	// TODO
 
 //-----------------------------------------------------------------------------
 void Profiler::init(int win_w, int win_h, int mouse_x, int mouse_y)
@@ -583,7 +585,7 @@ void Profiler::drawHoveredMarkers(const int *read_indices, const FrameInfo* fram
 		markers			= &m_gpu_thread_info.markers[0];
 		read_id			= read_indices[0];
 		start_time		= m_gpu_thread_info.markers[read_id].start;
-		sizeof_marker	= sizeof(m_gpu_thread_info.markers[0]);
+		sizeof_marker	= sizeof(GpuMarker);
 		is_gpu			= true;
 	}
 	else
@@ -601,7 +603,7 @@ void Profiler::drawHoveredMarkers(const int *read_indices, const FrameInfo* fram
 				markers			= &m_cpu_thread_infos[i].markers[0];
 				read_id			= read_indices[i+GPU_COUNT];
 				start_time		= frame_info->time_sync_start;
-				sizeof_marker	= sizeof(m_gpu_thread_info.markers[0]);
+				sizeof_marker	= sizeof(CpuMarker);
 				break;
 			}
 		}
@@ -638,10 +640,7 @@ void Profiler::drawHoveredMarkers(const int *read_indices, const FrameInfo* fram
 		rect.w = X_FACTOR * (float)(end - start);
 		if(rect.isPointInside(fx, fy))
 		{
-			// TODO: print info
-			printf("[%d] DEBUG: %s\n", m_cur_frame, m->name);	// BOUM
-
-			double	marker_time_ms = (double)((m->end - m->start) / (uint64_t)(1000));
+			double	marker_time_ms = (double)((m->end - m->start) / (uint64_t)(1000000));
 
 			char str[256];
 			sprintf(str, "[%2.1lfms] %s", marker_time_ms, m->name);
@@ -649,7 +648,12 @@ void Profiler::drawHoveredMarkers(const int *read_indices, const FrameInfo* fram
 			for(size_t i=0 ; i < m->layer ; i++)
 				str[len++] = ' ';
 			str[len] = '\0';
+
+			// TODO
 			drawer2D.drawString(str, 0.01f, 0.25f - 0.05f*counter, m->color);
+
+			/*//#define Y_TEXT_POS			( LINE_HEIGHT * (GPU_COUNT + m_cpu_thread_infos.getMaxSize()) )	// TODO*/
+
 			counter++;
 		}
 
@@ -657,8 +661,6 @@ void Profiler::drawHoveredMarkers(const int *read_indices, const FrameInfo* fram
 		incrementCycle(&read_id, nb_max_markers);
 		m = GET_MARKER(read_id);
 	}
-
-	printf("----\n");	// BOUM
 
 /*
 #ifdef PROFILER_CHEATING

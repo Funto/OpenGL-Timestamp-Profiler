@@ -214,13 +214,13 @@ int main()
 
 		glEnable(GL_DEPTH_TEST);
 
-		PROFILER_PUSH_CPU_MARKER("Update scene", COLOR_GREEN);
+		//PROFILER_PUSH_CPU_MARKER("Update scene", COLOR_GREEN);	// BOUM
 		scene.update(elapsed, t);
-		PROFILER_POP_CPU_MARKER();
+		//PROFILER_POP_CPU_MARKER();	// BOUM
 
-		PROFILER_PUSH_CPU_MARKER("Draw scene", COLOR_RED);
+		//PROFILER_PUSH_CPU_MARKER("Draw scene", COLOR_RED);	// BOUM
 		scene.draw(win_w, win_h);
-		PROFILER_POP_CPU_MARKER();
+		//PROFILER_POP_CPU_MARKER();	// BOUM
 
 		glDisable(GL_DEPTH_TEST);
 
