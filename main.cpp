@@ -30,12 +30,6 @@
 #define WIN_WIDTH	640
 #define WIN_HEIGHT	480
 
-#ifdef PROFILER_CHEATING
-double full_frame = 0.0;
-double update = 0.0;
-double wait_updates = 0.0;
-#endif
-
 static volatile bool	done = false;
 Scene					scene;
 
@@ -214,31 +208,19 @@ int main()
 
 		glEnable(GL_DEPTH_TEST);
 
-		//PROFILER_PUSH_CPU_MARKER("Update scene", COLOR_GREEN);	// BOUM
+		PROFILER_PUSH_CPU_MARKER("Update scene", COLOR_GREEN);
 		scene.update(elapsed, t);
-		//PROFILER_POP_CPU_MARKER();	// BOUM
+		PROFILER_POP_CPU_MARKER();
 
-		//PROFILER_PUSH_CPU_MARKER("Draw scene", COLOR_RED);	// BOUM
+		PROFILER_PUSH_CPU_MARKER("Draw scene", COLOR_RED);
 		scene.draw(win_w, win_h);
-		//PROFILER_POP_CPU_MARKER();	// BOUM
+		PROFILER_POP_CPU_MARKER();
 
 		glDisable(GL_DEPTH_TEST);
 
 		PROFILER_PUSH_GPU_MARKER("Draw profiler", COLOR_DARK_BLUE);
 		PROFILER_DRAW();
 		PROFILER_POP_GPU_MARKER();
-
-#ifdef PROFILER_CHEATING
-		char str[256];
-		sprintf(str, "[%2.1lfms] Full frame", full_frame);
-		drawer2D.drawString(str, 0.01f, 0.25f, COLOR_GRAY);
-
-		sprintf(str, "[%2.1lfms]  Update scene", update);
-		drawer2D.drawString(str, 0.01f, 0.2f, COLOR_GREEN);
-
-		sprintf(str, "[%2.1lfms]   Wait for thread updates", wait_updates);
-		drawer2D.drawString(str, 0.01f, 0.15f, COLOR_YELLOW);
-#endif
 
 		checkGLError();
 

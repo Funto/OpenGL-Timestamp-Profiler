@@ -12,7 +12,6 @@
 #include "utils.h"
 
 #define ENABLE_PROFILER	// comment this to disable the profiler
-//#define PROFILER_CHEATING	// TODO: temporary!!
 
 #define INVALID_TIME	((uint64_t)(-1))
 #define INVALID_QUERY	((GLuint)0)
@@ -187,7 +186,7 @@ protected:
 	CpuThreadInfo&	getOrAddCpuThreadInfo();
 
 	void	drawBackground();
-	void	drawHoveredMarkers(const int *read_indices, const FrameInfo* frame_info);
+	void	drawHoveredMarkersText(const int *read_indices, const FrameInfo* frame_info);
 	void	updateBackgroundRect();
 };
 

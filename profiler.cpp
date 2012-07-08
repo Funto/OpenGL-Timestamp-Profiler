@@ -4,19 +4,11 @@
 
 #ifdef ENABLE_PROFILER
 
-#ifdef PROFILER_CHEATING
-extern double full_frame;
-extern double update;
-extern double wait_updates;
-#endif
-
 #include "hp_timer.h"
 #include "drawer2D.h"
 #include "thread.h"
 #include <limits.h>
-// BEGIN BOUM
-#include <stdio.h>
-// END BOUM
+#include <string.h>
 
 Profiler profiler;
 
@@ -25,9 +17,9 @@ Profiler profiler;
 #define MARGIN_Y	0.02f	// bottom margin
 #define LINE_HEIGHT 0.01f   // height of a line representing a thread
 
+//#define TIME_DRAWN_MS 30.0 // the width of the profiler corresponds to TIME_DRAWN_MS milliseconds
 //#define TIME_DRAWN_MS 60.0 // the width of the profiler corresponds to TIME_DRAWN_MS milliseconds
 #define TIME_DRAWN_MS 120.0 // the width of the profiler corresponds to TIME_DRAWN_MS milliseconds
-//#define TIME_DRAWN_MS 15.0 // the width of the profiler corresponds to TIME_DRAWN_MS milliseconds
 
 #define GPU_COUNT	1	// TODO: multiple GPUs are not supported
 
@@ -37,8 +29,8 @@ Profiler profiler;
 #define	Y_OFFSET			(MARGIN_Y + LINE_HEIGHT)
 #define	X_FACTOR			( (float)(PROFILER_WIDTH / (TIME_DRAWN_MS * 1000000.0)) )
 
-//#define TEXT_POS	0.02f, (1.0f-0.02f)	// Where we write text on-screen	// TODO
-//#define Y_TEXT_POS			( LINE_HEIGHT * (GPU_COUNT + m_cpu_thread_infos.getMaxSize()) )	// TODO
+#define NB_MAX_TEXT_LINES	20
+#define Y_TEXT_MARGIN		0.05f	// size between 2 lines of text
 
 //-----------------------------------------------------------------------------
 void Profiler::init(int win_w, int win_h, int mouse_x, int mouse_y)
@@ -137,35 +129,6 @@ void Profiler::popCpuMarker()
 	marker.end = getTimeNs();
 
 	ti.nb_pushed_markers--;
-
-#ifdef PROFILER_CHEATING
-	if(&ti == &m_cpu_thread_infos[0])
-	{
-		if(ti.markers[index].color.r == COLOR_GRAY.r &&
-			ti.markers[index].color.g == COLOR_GRAY.g &&
-			ti.markers[index].color.b == COLOR_GRAY.b)
-		{
-			full_frame = (double)((ti.markers[index].end - ti.markers[index].start) / (uint64_t)(1000));
-			full_frame /= 1000.0;
-		}
-
-		if(ti.markers[index].color.r == COLOR_YELLOW.r &&
-			ti.markers[index].color.g == COLOR_YELLOW.g &&
-			ti.markers[index].color.b == COLOR_YELLOW.b)
-		{
-			wait_updates = (double)((ti.markers[index].end - ti.markers[index].start) / (uint64_t)(1000));
-			wait_updates  /= 1000.0;
-		}
-
-		if(ti.markers[index].color.r == COLOR_GREEN.r &&
-			ti.markers[index].color.g == COLOR_GREEN.g &&
-			ti.markers[index].color.b == COLOR_GREEN.b)
-		{
-			update= (double)((ti.markers[index].end - ti.markers[index].start) / (uint64_t)(1000));
-			update  /= 1000.0;
-		}
-	}
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -245,10 +208,6 @@ void Profiler::synchronizeFrame()
 	if(!m_enabled)
 		return;
 
-//	printf("DEBUG: sync start: m_write_id=%d, markers_stack.size() == %d, markers_done.size() == %d\n",
-//		m_write_id, (int)markers_stack.size(), (int)markers_done.size());
-//	printf("DEBUG: sync start: m_write_id=%d\n", m_write_id);
-
 	// Don't do anything when frozen
 	if(m_freeze_state == FROZEN)
 		return;
@@ -281,14 +240,6 @@ void Profiler::synchronizeFrame()
 	new_frame.time_sync_start = now;
 	new_frame.time_sync_end = INVALID_TIME;
 	new_frame.frame = m_cur_frame;
-
-	//pushGpuMarker("synchronize", COLOR_WHITE);
-	//popGpuMarker();
-
-//	printf("DEBUG: sync end: m_write_id=%d, markers_stack.size() == %d, markers_done.size() == %d\n",
-//		m_write_id, (int)markers_stack.size(), (int)markers_done.size());
-//	printf("=== DEBUG: sync end: m_write_id=%d\n, m_time_between_sync=%lf, m_time_last_sync=%lf",
-//		m_write_id, m_time_between_sync, m_time_last_sync);
 }
 
 //-----------------------------------------------------------------------------
@@ -301,7 +252,7 @@ void Profiler::draw()
 	drawBackground();
 
 	int displayed_frame = m_cur_frame - int(NB_RECORDED_FRAMES-1);
-	if(displayed_frame < 0)
+	if(displayed_frame < 0)	// don't draw anything during the first frames
 		return;
 
 	// Used when drawing information on the markers hovered by the mouse
@@ -481,7 +432,7 @@ void Profiler::draw()
 		ti.cur_read_id = read_id;
 	}
 
-	drawHoveredMarkers(read_indices, frame_info);
+	drawHoveredMarkersText(read_indices, frame_info);
 }
 
 //-----------------------------------------------------------------------------
@@ -554,7 +505,8 @@ void Profiler::drawBackground()
 	drawer2D.drawRect(m_back_rect, back_color);
 }
 
-void Profiler::drawHoveredMarkers(const int *read_indices, const FrameInfo* frame_info)
+/// Draw text information for the markers that are hovered by the mouse pointer
+void Profiler::drawHoveredMarkersText(const int *read_indices, const FrameInfo* frame_info)
 {
 	// Compute some values for drawing
 
@@ -569,15 +521,13 @@ void Profiler::drawHoveredMarkers(const int *read_indices, const FrameInfo* fram
 	bool			is_gpu = false;	// TODO: remove
 #define GET_MARKER(__i)	(const Marker*)(((const uint8_t*)markers) + (__i)*sizeof_marker)
 
-	float			y_text = 0.25f;	// TODO: depend on existing lines...
-
 	Rect	rect;
 	rect.x = X_OFFSET;
 	rect.y = Y_OFFSET;
 	rect.w = PROFILER_WIDTH;
 	rect.h = LINE_HEIGHT;
 
-	// Get information on the markers hovered by the mouse
+	// --- Which list of markers is hovered by the mouse pointer? ---
 	if(rect.isPointInside(fx, fy))
 	{
 		// Hovering the GPU line
@@ -590,6 +540,7 @@ void Profiler::drawHoveredMarkers(const int *read_indices, const FrameInfo* fram
 	}
 	else
 	{
+		// CPUs
 		for(size_t i=m_cpu_thread_infos.begin() ;
 			i != m_cpu_thread_infos.getMaxSize() ;
 			i = m_cpu_thread_infos.next(i))
@@ -610,71 +561,58 @@ void Profiler::drawHoveredMarkers(const int *read_indices, const FrameInfo* fram
 	}
 
 	if(!markers)
-		return;	// we don't hover any line
+		return;	// mouse pointer doesn't hover any line
 
-	// Draw information on the markers that are hovered
-	int				counter = 0;
-	const Marker*	m = GET_MARKER(read_id);
-	while(	m->frame >= frame_info->frame-1 &&
-			m->frame <= frame_info->frame)
+	// --- Choose the markers that are to be displayed ---
+	const Marker	*chosen_markers[NB_MAX_TEXT_LINES];
+	int				nb_chosen_markers = 0;
 	{
-		// Get the relative start and end of the marker
-		uint64_t	start, end;
-
-		// TODO: unify
-		if(!is_gpu)
+		int				counter = 0;
+		const Marker*	m = GET_MARKER(read_id);
+		while(	m->frame >= frame_info->frame-1 &&
+				m->frame <= frame_info->frame &&
+				nb_chosen_markers < NB_MAX_TEXT_LINES)
 		{
-			start	= clamp(m->start,	frame_info->time_sync_start, frame_info->time_sync_end);
-			end		= clamp(m->end,		frame_info->time_sync_start, frame_info->time_sync_end);
+			// Get the relative start and end of the marker
+			uint64_t	start	= m->start - start_time;
+			uint64_t	end		= m->end - start_time;
+
+			rect.x = X_OFFSET + X_FACTOR * (float)(start);
+			rect.w = X_FACTOR * (float)(end - start);
+			if(rect.isPointInside(fx, fy))
+			{
+				chosen_markers[nb_chosen_markers++] = m;
+				counter++;
+			}
+
+			// Next
+			incrementCycle(&read_id, nb_max_markers);
+			m = GET_MARKER(read_id);
 		}
-		else
-		{
-			start	= m->start;
-			end		= m->end;
-		}
-
-		start	-= start_time;
-		end		-= start_time;
-
-		rect.x = X_OFFSET + X_FACTOR * (float)(start);
-		rect.w = X_FACTOR * (float)(end - start);
-		if(rect.isPointInside(fx, fy))
-		{
-			double	marker_time_ms = (double)((m->end - m->start) / (uint64_t)(1000000));
-
-			char str[256];
-			sprintf(str, "[%2.1lfms] %s", marker_time_ms, m->name);
-			size_t len=strlen(str);
-			for(size_t i=0 ; i < m->layer ; i++)
-				str[len++] = ' ';
-			str[len] = '\0';
-
-			// TODO
-			drawer2D.drawString(str, 0.01f, 0.25f - 0.05f*counter, m->color);
-
-			/*//#define Y_TEXT_POS			( LINE_HEIGHT * (GPU_COUNT + m_cpu_thread_infos.getMaxSize()) )	// TODO*/
-
-			counter++;
-		}
-
-		// Next
-		incrementCycle(&read_id, nb_max_markers);
-		m = GET_MARKER(read_id);
 	}
 
-/*
-#ifdef PROFILER_CHEATING
-		char str[256];
-		sprintf(str, "[%2.1lfms] Full frame", full_frame);
-		drawer2D.drawString(str, 0.01f, 0.25f, COLOR_GRAY);
+	// --- Draw information on the chosen markers ---
+	{
+		char	str[256];
+		float	y_text = m_back_rect.y + m_back_rect.h + Y_TEXT_MARGIN;
+		for(int i=nb_chosen_markers-1 ; i >= 0 ; i--)
+		{
+			const Marker*	m = chosen_markers[i];
 
-		sprintf(str, "[%2.1lfms]  Update scene", update);
-		drawer2D.drawString(str, 0.01f, 0.2f, COLOR_GREEN);
+			uint64_t	marker_time_us = (m->end - m->start) / (uint64_t)(1000);
+			double	marker_time_ms = double(marker_time_us) / 1000.0;
 
-		sprintf(str, "[%2.1lfms]   Wait for thread updates", wait_updates);
-		drawer2D.drawString(str, 0.01f, 0.15f, COLOR_YELLOW);
-#endif
-*/
+			sprintf(str, "[%2.1lfms] ", marker_time_ms);
+			size_t len=strlen(str);
+			for(size_t layer=0 ; layer < m->layer ; layer++)
+				str[len++] = '+';
+			str[len] = '\0';
+			strcat(str, m->name);
+
+			drawer2D.drawString(str, 0.01f, y_text, m->color);
+			y_text += Y_TEXT_MARGIN;
+		}
+	}
 #undef GET_MARKER
 }
 

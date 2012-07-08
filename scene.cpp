@@ -108,9 +108,9 @@ void Scene::update(double elapsed, double t)
 		{
 			char str_marker[32];
 			sprintf(str_marker, "Multithread update %d", i);
-			//PROFILER_PUSH_CPU_MARKER(str_marker, m_colors[i]);	// BOUM
+			PROFILER_PUSH_CPU_MARKER(str_marker, m_colors[i]);
 			m_thread_data[i].grid.update(elapsed, t);
-			//PROFILER_POP_CPU_MARKER();	// BOUM
+			PROFILER_POP_CPU_MARKER();
 		}
 	}
 }
