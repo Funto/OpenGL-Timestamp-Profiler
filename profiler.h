@@ -63,7 +63,7 @@ private:
 	static const size_t	NB_GPU_MARKERS = NB_RECORDED_FRAMES * NB_MAX_GPU_MARKERS_PER_FRAME;
 
 	static const size_t	NB_MAX_CPU_THREADS = 32;
-	static const size_t	NB_FRAMES_BEFORE_KICK_CPU_THREAD = 4;	// TODO
+	//static const size_t	NB_FRAMES_BEFORE_KICK_CPU_THREAD = 4;	// TODO: remove threads that are not used anymore
 
 	static const size_t	MARKER_NAME_MAX_LENGTH = 32;
 
@@ -98,12 +98,15 @@ private:
 		ThreadId	thread_id;
 		CpuMarker	markers[NB_MARKERS_PER_CPU_THREAD];
 
-		int			cur_read_id;	// Index to the last pushed marker in the previous frame
-		int			cur_write_id;	// Index to the next cell we will write to
+		int			cur_read_id;	// Index of the last pushed marker in the previous frame
+		int			cur_write_id;	// Index of the next cell we will write to
+
+		int			next_read_id;	// draw() writes next_read_id, synchronizeFrame() copies cur_read_id <- next_read_id
+									// This deferring is needed for handling freeze/unfreeze.
 
 		size_t		nb_pushed_markers;
 
-		void	init(ThreadId id)	{cur_read_id=cur_write_id=0; thread_id = id; nb_pushed_markers=0;}
+		void	init(ThreadId id)	{cur_read_id=cur_write_id=next_read_id=0; thread_id = id; nb_pushed_markers=0;}
 	};
 
 	// Markers for the GPU
@@ -111,12 +114,15 @@ private:
 	{
 		GpuMarker	markers[NB_GPU_MARKERS];
 
-		int			cur_read_id;
-		int			cur_write_id;
+		int			cur_read_id;	// Index of the last pushed marker in the previous frame
+		int			cur_write_id;	// Index of the next cell we will write to
+
+		int			next_read_id;	// draw() writes next_read_id, synchronizeFrame() copies cur_read_id <- next_read_id.
+									// This deferring is needed for handling freeze/unfreeze.
 
 		size_t		nb_pushed_markers;
 
-		void	init()	{cur_read_id=cur_write_id=0; nb_pushed_markers=0;}
+		void	init()	{cur_read_id=cur_write_id=next_read_id=0; nb_pushed_markers=0;}
 	};
 
 	typedef	HoleArray<CpuThreadInfo, NB_MAX_CPU_THREADS>	CpuThreadInfoList;

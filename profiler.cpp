@@ -182,19 +182,10 @@ void Profiler::popGpuMarker()
 
 	GpuThreadInfo& ti = m_gpu_thread_info;
 
-	// BEGIN BOUM
-	// TODO: the bug appears when we looped (not present when we increase the number of GPU markers)
-	// -> should be present with CPU markers too
 	// Get the most recent marker that has not been closed yet
 	int index = ti.cur_write_id-1;
 	while(ti.markers[index].end != INVALID_TIME)	// skip closed markers
 		decrementCycle(&index, NB_GPU_MARKERS);
-
-	// Get the index for the marker to pop
-//	int index = ti.cur_write_id - (int)(ti.nb_pushed_markers);
-//	if(index < 0)
-//		index += NB_GPU_MARKERS;
-	// END BOUM
 
 	GpuMarker&	marker = ti.markers[index];
 
@@ -226,9 +217,21 @@ void Profiler::synchronizeFrame()
 	// Next frame
 	m_cur_frame++;
 
-	uint64_t	now = getTimeNs();
+	// Copy: cur_read_id <- next_read_id
+	// -> GPU:
+	m_gpu_thread_info.cur_read_id = m_gpu_thread_info.next_read_id;
+	// -> CPUs:
+	for(size_t i=m_cpu_thread_infos.begin() ;
+		i != m_cpu_thread_infos.getMaxSize() ;
+		i = m_cpu_thread_infos.next(i))
+	{
+		CpuThreadInfo	&ti = m_cpu_thread_infos.get(i);
+		ti.cur_read_id = ti.next_read_id;
+	}
 
 	// Frame time information
+	uint64_t	now = getTimeNs();
+
 	size_t	index_oldest = 0;
 	for(size_t i=0 ; i < NB_RECORDED_FRAMES ; i++)
 	{
@@ -258,12 +261,12 @@ void Profiler::draw()
 		return;
 
 	// Used when drawing information on the markers hovered by the mouse
-	int		read_indices[GPU_COUNT + NB_MAX_CPU_THREADS];
-	int		thread_index = 0;
+	int		read_indices[GPU_COUNT + NB_MAX_CPU_THREADS];	// indices of the first drawn markers, per thread
+	int		thread_index = 0;								// read_indices[thread_index]
 
 	// --- Find the FrameInfo (start and end times) for the frame we want to display ---
 	FrameInfo* frame_info = NULL;
-	for(size_t index_frame_info = 0 ; index_frame_info < int(NB_RECORDED_FRAMES) ; index_frame_info++)
+	for(int index_frame_info = 0 ; index_frame_info < int(NB_RECORDED_FRAMES) ; index_frame_info++)
 	{
 		if(m_frame_info[index_frame_info].frame == displayed_frame)
 		{
@@ -274,7 +277,7 @@ void Profiler::draw()
 	if(!frame_info || frame_info->time_sync_end == INVALID_TIME)
 		return;
 
-	uint64_t	frame_delta_time = frame_info->time_sync_end - frame_info->time_sync_start;
+	const uint64_t	frame_delta_time = frame_info->time_sync_end - frame_info->time_sync_start;
 
 	// --- Draw the end of the frame ---
 	{
@@ -292,28 +295,16 @@ void Profiler::draw()
 		GpuThreadInfo&	ti = m_gpu_thread_info;
 		int read_id = ti.cur_read_id;
 
-		// --- BEGIN TODO ---
-		// Jump back to the last marker that ends after the start of this frame
-/*		while(ti.markers[read_id].id_query_end != INVALID_QUERY &&
-			  ti.markers[read_id].end != INVALID_TIME &&
-			  ti.markers[read_id].end > frame_info->time_sync_start)
-		{
-			decrementCycle(&read_id, NB_GPU_MARKERS);
-		}
-*/
-		// In the worst case, we try to draw a marker that is out of this frame:
-		// it just gets clamped and nothing is visible
-		// --- END TODO ---
-
 		read_indices[thread_index++] = read_id;
 
 		// Get the times and draw the markers
 		uint64_t	first_start = INVALID_TIME;
 
-		//while(ti.markers[read_id].frame >= displayed_frame-1 &&
-		//	  ti.markers[read_id].frame <= displayed_frame)
+		// Select only the markers that belong to this frame.
+		// As GPU times are not synchronized with CPU times, we can't cleanly handle markers that started
+		// in the previous frame and finish in this one, so we just display the GPU markers that belong
+		// to the displayed frame.
 		while(ti.markers[read_id].frame == displayed_frame)
-		//while(ti.markers[read_id].frame <= displayed_frame)
 		{
 			GpuMarker&	marker = ti.markers[read_id];
 
@@ -363,7 +354,7 @@ void Profiler::draw()
 			incrementCycle(&read_id, NB_GPU_MARKERS);
 		}
 
-		ti.cur_read_id = read_id;
+		ti.next_read_id = read_id;
 	}
 
 	// ---- Draw the CPU markers ----
@@ -374,14 +365,6 @@ void Profiler::draw()
 	{
 		CpuThreadInfo	&ti = m_cpu_thread_infos.get(i);
 
-		// Jump back to the last marker that ends after the start of this frame
-/*		int read_id = ti.cur_read_id;
-		while(ti.markers[read_id].frame >= 0 &&
-			  ti.markers[read_id].end > frame_info->time_sync_start)
-		{
-			decrementCycle(&read_id, NB_MARKERS_PER_CPU_THREAD);
-		}
-*/
 		// Jump back to the last marker that ends after the start of this frame.
 		// Avoid going to a frame older than displayed_frame-1.
 		// -> handle markers that overlap the previous and the displayed frame
@@ -401,14 +384,15 @@ void Profiler::draw()
 			break;
 		}
 
-		read_indices[thread_index++] = read_id;
-
 		// In the worst case, we try to draw a marker that is out of this frame:
 		// it just gets clamped and nothing is visible
 
+		read_indices[thread_index++] = read_id;
+
 		// Draw the markers
-		while(ti.markers[read_id].frame >= displayed_frame-1 &&
-			  ti.markers[read_id].frame <= displayed_frame)
+		while(ti.markers[read_id].frame >= displayed_frame-1 &&	// - for markers that started in the previous frame and finished
+																// in this frame
+			  ti.markers[read_id].frame <= displayed_frame)		// - for "regular" markers, that started in this frame
 		{
 			CpuMarker	&marker = ti.markers[read_id];
 
@@ -426,14 +410,14 @@ void Profiler::draw()
 			rect.h = LINE_HEIGHT;
 
 			// Reduce vertically the size of the markers according to their layer
-			rect.y += 0.002f*marker.layer;
-			rect.h -= 0.004f*marker.layer;
+			rect.y += Y_SCALE_OFFSET*marker.layer;
+			rect.h -= (2.0f*Y_SCALE_OFFSET)*marker.layer;
 
 			drawer2D.drawRect(rect, marker.color);
 			incrementCycle(&read_id, NB_MARKERS_PER_CPU_THREAD);
 		}
 
-		ti.cur_read_id = read_id;
+		ti.next_read_id = read_id;
 	}
 
 	drawHoveredMarkersText(read_indices, frame_info);
@@ -516,7 +500,7 @@ void Profiler::drawHoveredMarkersText(const int *read_indices, const FrameInfo* 
 	int				read_id = -1;
 	uint64_t		start_time = 0;
 	size_t			sizeof_marker = 0;
-	bool			is_gpu = false;	// TODO: remove
+
 #define GET_MARKER(__i)	(const Marker*)(((const uint8_t*)markers) + (__i)*sizeof_marker)
 
 	Rect	rect;
@@ -534,7 +518,6 @@ void Profiler::drawHoveredMarkersText(const int *read_indices, const FrameInfo* 
 		read_id			= read_indices[0];
 		start_time		= m_gpu_thread_info.markers[read_id].start;
 		sizeof_marker	= sizeof(GpuMarker);
-		is_gpu			= true;
 	}
 	else
 	{
