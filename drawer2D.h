@@ -40,7 +40,7 @@ public:
 
 	void	onResize(int win_w, int win_h)	{m_win_w = win_w;	m_win_h = win_h;	}
 
-	void	drawRect(const Rect& rect, const Color& color=COLOR_WHITE);
+	void	drawRect(const Rect& rect, const Color& color=COLOR_WHITE, float alpha=1.0f);
 	void	drawString(const char* str, float x, float y, const Color& color=COLOR_WHITE);
 
 private:

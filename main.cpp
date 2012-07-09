@@ -32,9 +32,11 @@
 
 static volatile bool	done = false;
 Scene					scene;
+bool					help_visible = true;
 
 void GLFWCALL onMouseClick(int x, int y);
 void GLFWCALL onKey(int key, int action);
+void drawHelp();
 
 void debugCallback(GLenum source, GLenum type, GLuint id, GLenum severity,
 				   GLsizei length, const GLchar* message, GLvoid* userParam)
@@ -222,6 +224,13 @@ int main()
 		PROFILER_DRAW();
 		PROFILER_POP_GPU_MARKER();
 
+		if(help_visible)
+		{
+			PROFILER_PUSH_CPU_MARKER("Draw help", COLOR_MAGENTA);
+			drawHelp();
+			PROFILER_POP_CPU_MARKER();
+		}
+
 		checkGLError();
 
 		fpsCount(BASE_TITLE);
@@ -260,9 +269,33 @@ void GLFWCALL onMouseClick(int button, int action)
 
 void GLFWCALL onKey(int key, int action)
 {
-	if(action == GLFW_RELEASE && key == 'M')
+	if(action == GLFW_RELEASE)
 	{
-		scene.setMultithreaded(!scene.isMultithreaded());
-		printf("Multithreaded update: %s\n", scene.isMultithreaded() ? "yes" : "no");
+		switch(key)
+		{
+		case 'H':
+			help_visible = !help_visible;
+			break;
+		case 'P':
+			profiler.setVisible(!profiler.isVisible());
+			break;
+		case 'M':
+			scene.setMultithreaded(!scene.isMultithreaded());
+			printf("Multithreaded update: %s\n", scene.isMultithreaded() ? "yes" : "no");
+			break;
+		}
 	}
+}
+
+void drawHelp()
+{
+	drawer2D.drawRect(Rect(0.1f, 0.1f, 0.8f, 0.8f), Color(0xC0, 0xC0, 0xC0), 0.5f);
+	drawer2D.drawString(
+		"Commands:\n"
+		"[H]: display this help message\n"
+		"[P]: profiler visiblity\n"
+		"[M]: mono/multi threaded update\n"
+		"[ESC]: quit\n"
+		"click on the profiler to freeze it\n",
+		0.12f, 1.0f-0.15f, COLOR_WHITE);
 }

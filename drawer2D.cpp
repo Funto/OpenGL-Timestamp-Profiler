@@ -49,7 +49,7 @@ void Drawer2D::shut()
 }
 
 //-----------------------------------------------------------------------------
-void Drawer2D::drawRect(const Rect& rect, const Color& color)
+void Drawer2D::drawRect(const Rect& rect, const Color& color, float alpha)
 {
 	glEnableVertexAttribArray(ATTRIB_VERTEX);
 
@@ -76,7 +76,7 @@ void Drawer2D::drawRect(const Rect& rect, const Color& color)
 	float color_array[] = {(float)(color.r) / 255.0f,
 						   (float)(color.g) / 255.0f,
 						   (float)(color.b) / 255.0f,
-						   1.0f
+						   alpha
 						  };
 	glUniform4fv(m_id_uniform_color, 1, color_array);
 
@@ -163,10 +163,8 @@ void Drawer2D::drawString(const char* str, float x, float y, const Color& color)
 
 			glDrawArrays(GL_TRIANGLES, 0, 6);
 
-			// BEGIN BOUM
 			//cur_x += screen_char_width;
-			cur_x += screen_char_width*0.9f;
-			// END BOUM
+			cur_x += 0.9f*screen_char_width;	// HACK
 		}
 
 		p++;

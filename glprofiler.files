@@ -1,6 +1,6 @@
 glprofiler.files
 SConstruct
-Makefile
+Makefile.mingw
 
 drawer2D.cpp
 grid.cpp

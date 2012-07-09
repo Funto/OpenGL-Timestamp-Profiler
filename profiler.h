@@ -154,7 +154,7 @@ private:
 
 	FreezeState	 m_freeze_state;
 
-	bool	m_enabled;
+	bool	m_visible;
 
 	// Handling interaction with the mouse
 	int		m_mouse_x, m_mouse_y;
@@ -179,8 +179,8 @@ public:
 
 	void	draw();
 
-	void	setEnabled(bool enabled)	{m_enabled=enabled;}
-	bool	isEnabled() const			{return m_enabled;}
+	void	setVisible(bool visible)	{m_visible=visible;}
+	bool	isVisible() const			{return m_visible;}
 
 	bool	isFrozen() const			{return m_freeze_state == FROZEN || m_freeze_state == WAITING_FOR_UNFREEZE;}
 

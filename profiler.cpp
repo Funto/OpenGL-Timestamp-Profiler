@@ -8,7 +8,7 @@
 #include "drawer2D.h"
 #include "thread.h"
 #include <limits.h>
-#include <string.h>
+#include <stdio.h>
 
 Profiler profiler;
 
@@ -42,7 +42,7 @@ void Profiler::init(int win_w, int win_h, int mouse_x, int mouse_y)
 {
 	m_cur_frame = 0;
 	m_freeze_state = UNFROZEN;
-	m_enabled = true;
+	m_visible = true;
 
 	updateBackgroundRect();
 
@@ -87,9 +87,6 @@ void Profiler::shut()
 /// Push a new marker that starts now
 void Profiler::pushCpuMarker(const char* name, const Color& color)
 {
-	if(!m_enabled)
-		return;
-
 	// Don't do anything when frozen
 	if(isFrozen())
 		return;
@@ -114,9 +111,6 @@ void Profiler::pushCpuMarker(const char* name, const Color& color)
 /// Stop the last pushed marker
 void Profiler::popCpuMarker()
 {
-	if(!m_enabled)
-		return;
-
 	// Don't do anything when frozen
 	if(isFrozen())
 		return;
@@ -140,9 +134,6 @@ void Profiler::popCpuMarker()
 /// Push a new GPU marker that starts when the previously issued commands are processed
 void Profiler::pushGpuMarker(const char* name, const Color& color)
 {
-	if(!m_enabled)
-		return;
-
 	// Don't do anything when frozen
 	if(isFrozen())
 		return;
@@ -173,9 +164,6 @@ void Profiler::pushGpuMarker(const char* name, const Color& color)
 /// Stop the last pushed GPU marker when the previously issued commands are processed
 void Profiler::popGpuMarker()
 {
-	if(!m_enabled)
-		return;
-
 	// Don't do anything when frozen
 	if(isFrozen())
 		return;
@@ -201,9 +189,6 @@ void Profiler::popGpuMarker()
 /// Update frame information and frame counter
 void Profiler::synchronizeFrame()
 {
-	if(!m_enabled)
-		return;
-
 	// Freeze/unfreeze as needed
 	if(m_freeze_state == WAITING_FOR_FREEZE)
 		m_freeze_state = FROZEN;
@@ -251,10 +236,8 @@ void Profiler::synchronizeFrame()
 /// Draw the markers
 void Profiler::draw()
 {
-	if(!m_enabled)
-		return;
-
-	drawBackground();
+	if(m_visible)
+		drawBackground();
 
 	int displayed_frame = m_cur_frame - int(NB_RECORDED_FRAMES-1);
 	if(displayed_frame < 0)	// don't draw anything during the first frames
@@ -287,7 +270,8 @@ void Profiler::draw()
 		rect_end.w = 0.003f;
 		rect_end.h = m_back_rect.h;
 
-		drawer2D.drawRect(rect_end, COLOR_BLACK);
+		if(m_visible)
+			drawer2D.drawRect(rect_end, COLOR_BLACK);
 	}
 
 	// ---- Draw the GPU markers ----
@@ -348,7 +332,8 @@ void Profiler::draw()
 				rect.y += Y_SCALE_OFFSET		*marker.layer;
 				rect.h -= (2.0f*Y_SCALE_OFFSET)	*marker.layer;
 
-				drawer2D.drawRect(rect, marker.color);
+				if(m_visible)
+					drawer2D.drawRect(rect, marker.color);
 			}
 
 			incrementCycle(&read_id, NB_GPU_MARKERS);
@@ -413,21 +398,23 @@ void Profiler::draw()
 			rect.y += Y_SCALE_OFFSET*marker.layer;
 			rect.h -= (2.0f*Y_SCALE_OFFSET)*marker.layer;
 
-			drawer2D.drawRect(rect, marker.color);
+			if(m_visible)
+				drawer2D.drawRect(rect, marker.color);
 			incrementCycle(&read_id, NB_MARKERS_PER_CPU_THREAD);
 		}
 
 		ti.next_read_id = read_id;
 	}
 
-	drawHoveredMarkersText(read_indices, frame_info);
+	if(m_visible)
+		drawHoveredMarkersText(read_indices, frame_info);
 }
 
 //-----------------------------------------------------------------------------
 /// Handle freeze/unfreeze
 void Profiler::onLeftClick()
 {
-	if(!m_enabled)
+	if(!m_visible)
 		return;
 
 	float fx = float(m_mouse_x) / float(m_win_w);

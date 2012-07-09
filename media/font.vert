@@ -19,7 +19,7 @@ void main()
 {
 	vec2 xy = 2.0*vertex_position - vec2(1.0);
 
-	uv = vertex_uv;	// TODO !!!
+	uv = vertex_uv;	// TODO: bug where we see a part of the letter above...
 
 	gl_Position = vec4(xy, 0.0, 1.0);
 }
