@@ -83,7 +83,7 @@
     <Library Include="glew-1.7.0\lib\glew32.lib">
       <Filter>Libraries</Filter>
     </Library>
-    <Library Include="glfw-2.7.5.bin.WIN32\lib-msvc100\GLFW.lib">
+    <Library Include="glfw-2.7.5\lib-msvc100\GLFW.lib">
       <Filter>Libraries</Filter>
     </Library>
   </ItemGroup>

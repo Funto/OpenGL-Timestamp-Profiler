@@ -108,7 +108,7 @@
   </ItemGroup>
   <ItemGroup>
     <Library Include="glew-1.7.0\lib\glew32.lib" />
-    <Library Include="glfw-2.7.5.bin.WIN32\lib-msvc100\GLFW.lib" />
+    <Library Include="glfw-2.7.5\lib-msvc100\GLFW.lib" />
   </ItemGroup>
   <ItemGroup>
     <None Include="media\color.frag" />
