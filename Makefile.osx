@@ -1,7 +1,7 @@
 CC=g++
 CFLAGS=-Wall -g
 CPPFLAGS=-Iglew-1.7.0/include -Iglfw-2.7.5/include
-LDFLAGS=-Lglfw-2.7.5/lib-mingw glew-1.7.0/lib-win32/glew32.dll -lglfw -lopengl32 -lgdi32
+LDFLAGS=./glfw-2.7.5/lib-cocoa/libglfw.a -framework Cocoa -framework OpenGL ./glew-1.7.0/lib-osx/libGLEW.a
 EXEC=glprofiler
 SRC= $(wildcard *.cpp)
 OBJ= $(SRC:.cpp=.o)

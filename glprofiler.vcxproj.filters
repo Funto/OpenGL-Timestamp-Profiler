@@ -80,10 +80,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Library Include="glew-1.7.0\lib\glew32.lib">
+    <Library Include="glfw-2.7.5\lib-msvc100\GLFW.lib">
       <Filter>Libraries</Filter>
     </Library>
-    <Library Include="glfw-2.7.5\lib-msvc100\GLFW.lib">
+    <Library Include="glew-1.7.0\lib-win32\glew32.lib">
       <Filter>Libraries</Filter>
     </Library>
   </ItemGroup>
