@@ -169,6 +169,12 @@ int main()
 	glGetIntegerv(GL_MINOR_VERSION, &minor);
 	printf("OpenGL version: %d.%d\n", major, minor);
 
+	if(major < 3 || (major == 3 && minor < 2))
+	{
+		fprintf(stderr, "*** OpenGL version too low, need at least 3.2 for ARB_timer_query\n");
+		return EXIT_FAILURE;
+	}
+
 	// Main loop
 	double elapsed = 0.0;
 	double t = glfwGetTime();
