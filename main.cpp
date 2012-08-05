@@ -125,6 +125,21 @@ int main()
 		glfwTerminate();
 		return EXIT_FAILURE;
 	}
+	
+	// Check OpenGL version
+	GLint major, minor;
+	glGetIntegerv(GL_MAJOR_VERSION, &major);
+	glGetIntegerv(GL_MINOR_VERSION, &minor);
+	printf("OpenGL version: %d.%d\n", major, minor);
+	
+	const GLubyte* str = glGetString(GL_VERSION);
+	printf("GL_VERSION string: %s\n", (const char*)str);
+
+	if(major < 3 || (major == 3 && minor < 2))
+	{
+		fprintf(stderr, "*** OpenGL version too low, need at least 3.2 for ARB_timer_query\n");
+		return EXIT_FAILURE;
+	}
 
 	// Setup a VAO for the whole time the program is executed
 	GLuint id_vao;
@@ -163,17 +178,6 @@ int main()
 
 	// Enable vertical sync
 	glfwSwapInterval( 1 );
-
-	GLint major, minor;
-	glGetIntegerv(GL_MAJOR_VERSION, &major);
-	glGetIntegerv(GL_MINOR_VERSION, &minor);
-	printf("OpenGL version: %d.%d\n", major, minor);
-
-	if(major < 3 || (major == 3 && minor < 2))
-	{
-		fprintf(stderr, "*** OpenGL version too low, need at least 3.2 for ARB_timer_query\n");
-		return EXIT_FAILURE;
-	}
 
 	// Main loop
 	double elapsed = 0.0;
