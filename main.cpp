@@ -91,10 +91,22 @@ int main()
 	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR,  3);
 	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR,  3);
 	glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+    #ifdef __APPLE__
+        #warning "MacOS X might not yet support OpenGL 3.3 (3.2 was the maximum for 10.8)"
+    #endif
 #elif defined USE_FORWARD_COMPATIBLE_CONTEXT_GL_4
 	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR,  4);
 	glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR,  0);
 	glfwOpenWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+	#ifdef __APPLE__
+        #warning "MacOS X might not yet support OpenGL 3.3 (3.2 was the maximum for 10.8)"
+    #endif
+#else
+	#ifdef __APPLE__
+        glfwOpenWindowHint(GLFW_OPENGL_VERSION_MAJOR,  3);
+        glfwOpenWindowHint(GLFW_OPENGL_VERSION_MINOR,  2);
+        glfwOpenWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    #endif
 #endif
 
 #ifdef USE_DEBUG_CONTEXT
@@ -110,15 +122,33 @@ int main()
 	}
 
 	glfwSetWindowTitle( BASE_TITLE );
-
-	if(GLEW_ARB_debug_output)
+	
+	// Check OpenGL version
+	// in case of GL 1.x or 2.x we have to check with glGetString:
+    const GLubyte *version = glGetString(GL_VERSION);
+    if ((version[0] == '2' || version[0] == '1') && version[1] == '.')
 	{
-		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
-		glDebugMessageCallbackARB((GLDEBUGPROCARB)&debugCallback, NULL);
+        fprintf(stderr, "*** OpenGL version too low, need at least 3.2 for ARB_timer_query (%s)\n", version);
+		return EXIT_FAILURE;
+    }
+    
+    // getting the version with glGetInteger needs gl >= 3.0
+    GLint major, minor;
+	glGetIntegerv(GL_MAJOR_VERSION, &major);
+	glGetIntegerv(GL_MINOR_VERSION, &minor);
+	
+	if(major == 3 && minor < 2)
+	{
+		fprintf(stderr, "*** OpenGL version too low, need at least 3.2 for ARB_timer_query (%d.%d)\n",major, minor);
+		return EXIT_FAILURE;
 	}
-
+	printf("OpenGL version: %d.%d\n", major, minor);
+    
 	// Load the OpenGL implementation + available extensions
-	GLenum error = glewInit();
+#ifdef __APPLE__
+	glewExperimental = GL_TRUE; // needed for core profiles
+#endif
+    GLenum error = glewInit();
 	if(error != GL_NO_ERROR)
 	{
 		fprintf(stderr, "Failed to initialize GLEW: error=%d\n", (int)error);
@@ -126,19 +156,11 @@ int main()
 		return EXIT_FAILURE;
 	}
 	
-	// Check OpenGL version
-	GLint major, minor;
-	glGetIntegerv(GL_MAJOR_VERSION, &major);
-	glGetIntegerv(GL_MINOR_VERSION, &minor);
-	printf("OpenGL version: %d.%d\n", major, minor);
-	
-	const GLubyte* str = glGetString(GL_VERSION);
-	printf("GL_VERSION string: %s\n", (const char*)str);
-
-	if(major < 3 || (major == 3 && minor < 2))
+	// Register a debug callback if supported by the driver
+	if(GLEW_ARB_debug_output)
 	{
-		fprintf(stderr, "*** OpenGL version too low, need at least 3.2 for ARB_timer_query\n");
-		return EXIT_FAILURE;
+		glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+		glDebugMessageCallbackARB((GLDEBUGPROCARB)&debugCallback, NULL);
 	}
 
 	// Setup a VAO for the whole time the program is executed
